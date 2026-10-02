@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wordspire Tower V2.1｜英語單字勇者爬塔</title>
+<style>
+  :root{
+    --bg:#10151f;
+    --panel:#182131;
+    --panel2:#212c3f;
+    --line:#35425b;
+    --text:#eef4ff;
+    --muted:#9fb0ca;
+    --gold:#f2c75c;
+    --green:#63d69f;
+    --red:#ff7272;
+    --blue:#78a8ff;
+    --violet:#b28cff;
+    --shadow:0 18px 50px rgba(0,0,0,.28);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    color:var(--text);
+    font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,-apple-system,sans-serif;
+    background:
+      radial-gradient(circle at 10% 0%,rgba(120,168,255,.14),transparent 32%),
+      radial-gradient(circle at 90% 10%,rgba(178,140,255,.12),transparent 28%),
+      linear-gradient(180deg,#0b1018 0%,#111827 100%);
+  }
+  button,input,select{font:inherit}
+  button{cursor:pointer}
+  .app{max-width:1380px;margin:0 auto;padding:18px}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    margin-bottom:14px;padding:14px 16px;border:1px solid var(--line);
+    border-radius:18px;background:rgba(24,33,49,.82);backdrop-filter:blur(12px);
+    box-shadow:var(--shadow);
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:44px;height:44px;display:grid;place-items:center;border-radius:14px;
+    background:linear-gradient(135deg,#567dff,#9c6cff);font-size:24px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+  }
+  h1{font-size:20px;margin:0}
+  .subtitle{font-size:12px;color:var(--muted);margin-top:3px}
+  .top-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+  .btn{
+    border:1px solid var(--line);background:#202b3d;color:var(--text);
+    padding:9px 12px;border-radius:11px;transition:.18s transform,.18s background;
+  }
+  .btn:hover{transform:translateY(-1px);background:#29364d}
+  .btn.primary{background:linear-gradient(135deg,#5278ff,#8d67ff);border-color:transparent}
+  .btn.gold{background:linear-gradient(135deg,#b98a27,#e3b847);border-color:transparent;color:#171109;font-weight:800}
+  .btn.danger{background:#3b2329;border-color:#6f343d}
+  .bank-pill{
+    display:inline-flex;align-items:center;min-height:38px;padding:7px 10px;border-radius:11px;
+    border:1px solid #3d506f;background:#111925;color:#b9c9df;font-size:11px;font-weight:800;white-space:nowrap
+  }
+  .bank-pill.ready{color:#9be9be;border-color:#327052;background:rgba(54,139,94,.12)}
+  .bank-pill.fallback{color:#ffd58b;border-color:#7d6130;background:rgba(169,118,35,.12)}
+  .layout{display:grid;grid-template-columns:280px minmax(0,1fr) 310px;gap:14px}
+  .panel{
+    background:rgba(24,33,49,.93);border:1px solid var(--line);border-radius:18px;
+    box-shadow:var(--shadow);overflow:hidden;
+  }
+  .panel-title{
+    padding:12px 15px;border-bottom:1px solid var(--line);font-size:13px;
+    font-weight:800;letter-spacing:.04em;color:#cdd9ed;
+  }
+  .panel-body{padding:14px}
+  .hero-card{text-align:center}
+  .avatar-wrap{
+    width:150px;height:150px;margin:4px auto 10px;border-radius:50%;
+    display:grid;place-items:center;background:radial-gradient(circle,#ffffff,#dfe8f5 72%);
+    border:1px solid #aebbd0;
+  }
+  #avatarSvg{width:132px;height:132px;filter:drop-shadow(0 10px 10px rgba(0,0,0,.24))}
+  .hero-name{font-size:18px;font-weight:900}
+  .hero-rank{color:var(--gold);font-size:12px;margin-top:3px}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:13px}
+  .stat{
+    background:#111925;border:1px solid #2c3a51;border-radius:12px;padding:9px;
+    text-align:left;
+  }
+  .stat small{display:block;color:var(--muted);font-size:11px}
+  .stat strong{font-size:17px}
+  .hpbar,.enemybar{
+    height:11px;border-radius:999px;background:#0d131d;border:1px solid #2d3b53;overflow:hidden
+  }
+  .hpfill{height:100%;background:linear-gradient(90deg,#3bbf86,#78e5b4);transition:.35s width}
+  .enemyfill{height:100%;background:linear-gradient(90deg,#ef5d68,#ff9a76);transition:.35s width}
+  .bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:11px 1px 5px}
+  .equipment{margin-top:13px;display:grid;gap:8px}
+  .equip{
+    padding:9px;border-radius:12px;border:1px solid #2d3b53;background:#111925;
+    display:flex;justify-content:space-between;gap:8px;font-size:12px
+  }
+  .equip span:last-child{color:#d5e0f2}
+  .battle{min-height:730px;display:flex;flex-direction:column}
+  .stage{
+    position:relative;min-height:330px;padding:18px;overflow:hidden;
+    background:
+      linear-gradient(rgba(16,21,31,.05),rgba(16,21,31,.65)),
+      repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 2px,transparent 2px 56px),
+      linear-gradient(180deg,#253249,#172131);
+  }
+  .stage::before{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:80px;
+    background:linear-gradient(180deg,transparent,rgba(7,10,15,.52));
+  }
+  .floor-badge{
+    position:absolute;left:18px;top:16px;padding:8px 12px;border-radius:999px;
+    background:rgba(8,12,18,.72);border:1px solid #4a5a75;font-size:12px;font-weight:800
+  }
+  .score-badge{
+    position:absolute;right:18px;top:16px;padding:8px 12px;border-radius:999px;
+    background:rgba(8,12,18,.72);border:1px solid #4a5a75;font-size:12px;
+  }
+  .combatants{
+    position:absolute;left:7%;right:7%;bottom:40px;display:flex;
+    align-items:flex-end;justify-content:space-between;gap:30px;
+  }
+  .fighter{text-align:center;width:38%}
+  .fighter-name{font-size:13px;font-weight:800;margin-bottom:8px}
+  .mini-avatar{height:150px;display:grid;place-items:end center}
+  .player-figure{width:115px;transition:.2s transform}
+  .monster-figure{
+    width:145px;height:145px;display:grid;place-items:center;font-size:82px;
+    border-radius:50%;background:radial-gradient(circle,rgba(255,114,114,.18),transparent 68%);
+    transition:.2s transform,.2s filter;
+  }
+  .attack-player{animation:playerAttack .38s ease}
+  .attack-monster{animation:monsterAttack .38s ease}
+  .hit{animation:hitFlash .35s ease}
+  @keyframes playerAttack{50%{transform:translateX(46px) scale(1.04)}}
+  @keyframes monsterAttack{50%{transform:translateX(-46px) scale(1.05)}}
+  @keyframes hitFlash{35%{filter:brightness(2.4) saturate(.2);transform:translateX(7px)}65%{transform:translateX(-7px)}}
+  .battle-log{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:12px;
+    width:min(72%,560px);text-align:center;font-size:12px;color:#d7e3f3;
+  }
+  .quiz{padding:16px 18px 18px;display:flex;flex-direction:column;flex:1}
+  .quiz-meta{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px}
+  .word-card{
+    margin:13px 0 12px;padding:20px;border-radius:16px;background:#111925;border:1px solid #30415c;
+    text-align:center;
+  }
+  .word{font-size:34px;font-weight:950;letter-spacing:.01em}
+  .word-pos{font-size:12px;color:var(--blue);margin-top:4px}
+  .prompt{font-size:13px;color:#c5d3e8;margin-top:8px}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .answer{
+    min-height:58px;border-radius:13px;border:1px solid #34445f;background:#1b2637;
+    color:var(--text);padding:10px 12px;text-align:left;transition:.16s;
+  }
+  .answer:hover:not(:disabled){background:#26364d;transform:translateY(-1px)}
+  .answer.correct{border-color:#4bd095;background:rgba(75,208,149,.16)}
+  .answer.wrong{border-color:#ff7272;background:rgba(255,114,114,.16)}
+  .answer:disabled{cursor:default}
+  .feedback{
+    min-height:86px;margin-top:11px;padding:10px 12px;border-radius:12px;
+    background:#111925;border:1px solid #293850;font-size:12px;color:#cbd8eb;
+  }
+  .battle-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+  .tower{
+    max-height:274px;overflow:auto;padding-right:4px;
+    display:flex;flex-direction:column-reverse;gap:6px;
+  }
+  .floor-row{
+    display:flex;align-items:center;justify-content:space-between;padding:8px 9px;
+    border:1px solid #2e3c53;background:#111925;border-radius:10px;font-size:11px;
+  }
+  .floor-row.current{border-color:#7f9fff;background:rgba(85,117,255,.13)}
+  .floor-row.locked{opacity:.38}
+  .floor-row .fnum{font-weight:900}
+  .shop-list,.wrong-list{display:grid;gap:8px}
+  .shop-item{
+    border:1px solid #2e3d55;border-radius:12px;padding:10px;background:#111925;
+  }
+  .shop-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .shop-name{font-weight:800;font-size:12px}
+  .shop-price{color:var(--gold);font-size:12px}
+  .shop-desc{font-size:11px;color:var(--muted);margin-top:4px}
+  .shop-item button{margin-top:8px;width:100%;padding:7px;border-radius:9px}
+  .tabs{display:flex;border-bottom:1px solid var(--line)}
+  .tab{
+    flex:1;padding:10px 8px;text-align:center;font-size:12px;color:var(--muted);
+    background:#141d2b;border:0;border-right:1px solid var(--line);
+  }
+  .tab:last-child{border-right:0}
+  .tab.active{color:#fff;background:#202b3f}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+  .wrong-list{max-height:380px;overflow:auto}
+  .wrong-item{padding:9px;border:1px solid #2c3b52;background:#111925;border-radius:10px;font-size:12px}
+  .wrong-item strong{color:#fff}
+  .wrong-item span{color:var(--muted)}
+  .modal{
+    position:fixed;inset:0;background:rgba(5,8,12,.76);display:none;place-items:center;
+    padding:18px;z-index:20;backdrop-filter:blur(8px)
+  }
+  .modal.show{display:grid}
+  .modal-card{
+    width:min(780px,96vw);max-height:92vh;overflow:auto;border-radius:20px;
+    border:1px solid #42526d;background:#172131;box-shadow:0 30px 80px rgba(0,0,0,.45);
+  }
+  .modal-head{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .modal-head h2{margin:0;font-size:18px}
+  .modal-body{padding:18px}
+  .creator{display:grid;grid-template-columns:250px 1fr;gap:18px}
+  .creator-preview{display:grid;place-items:center;background:linear-gradient(145deg,#ffffff,#dfe8f5);border:1px solid #aebbd0;border-radius:16px;min-height:300px}
+  .creator-controls{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field label{display:block;color:var(--muted);font-size:11px;margin-bottom:5px}
+  .field select,.field input[type="text"]{
+    width:100%;padding:9px 10px;border-radius:10px;border:1px solid #3a4962;background:#111925;color:#fff
+  }
+  .swatches{display:flex;gap:7px;flex-wrap:wrap}
+  .swatch{
+    width:31px;height:31px;border-radius:50%;border:2px solid transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)
+  }
+  .swatch.active{border-color:#fff}
+  .creator-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+  .notice{
+    margin-top:12px;padding:10px;border-radius:12px;background:rgba(120,168,255,.09);
+    border:1px solid rgba(120,168,255,.24);font-size:11px;color:#b9c9df;
+  }
+  .result-overlay{
+    display:none;position:absolute;inset:0;z-index:5;place-items:center;background:rgba(10,14,20,.68);
+    backdrop-filter:blur(4px)
+  }
+  .result-overlay.show{display:grid}
+  .result-card{
+    width:min(440px,90%);padding:22px;border-radius:18px;text-align:center;
+    border:1px solid #4a5d7d;background:#182337;box-shadow:var(--shadow)
+  }
+  .result-icon{font-size:52px}
+  .result-card h3{margin:6px 0 8px;font-size:22px}
+  .result-card p{margin:4px 0;color:#c7d4e8;font-size:13px}
+  .result-buttons{display:flex;gap:8px;justify-content:center;margin-top:15px;flex-wrap:wrap}
+  .tiny{font-size:10px;color:var(--muted)}
+  .combo{color:#ffd66b;font-weight:900}
+  .kbd{padding:2px 6px;border-radius:5px;border:1px solid #4a5b74;background:#111925;font-size:10px}
+  @media(max-width:1050px){
+    .layout{grid-template-columns:250px minmax(0,1fr)}
+    .rightcol{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  }
+  @media(max-width:760px){
+    .app{padding:8px}
+    .topbar{align-items:flex-start}
+    .layout{display:block}
+    .panel{margin-bottom:10px}
+    .battle{min-height:690px}
+    .stage{min-height:300px}
+    .combatants{left:2%;right:2%}
+    .fighter{width:45%}
+    .answers{grid-template-columns:1fr}
+    .rightcol{display:block}
+    .creator{grid-template-columns:1fr}
+    .creator-controls{grid-template-columns:1fr}
+    .top-actions .btn:nth-child(2){display:none}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">⚔️</div>
+      <div>
+        <h1>Wordspire Tower V3｜7000字英語單字勇者爬塔</h1>
+        <div class="subtitle">7000 字級大型分層題庫｜答對攻擊、答錯受傷，用單字能力一路攻上塔頂。</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="bank-pill" id="bankStatus">題庫：載入中…</span>
+      <button class="btn" id="refreshBankBtn">更新題庫</button>
+      <button class="btn" id="editHeroBtn">捏臉／角色</button>
+      <button class="btn" id="healBtn">旅店回血 30 🪙</button>
+      <button class="btn danger" id="resetBtn">重置進度</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="panel-title">勇者狀態</div>
+      <div class="panel-body hero-card">
+        <div class="avatar-wrap"><svg id="avatarSvg" viewBox="0 0 160 160"></svg></div>
+        <div class="hero-name" id="heroName">勇者 Daniel</div>
+        <div class="hero-rank" id="heroRank">見習冒險者</div>
+
+        <div class="bar-label"><span>生命值</span><span id="hpText">100 / 100</span></div>
+        <div class="hpbar"><div class="hpfill" id="hpFill" style="width:100%"></div></div>
+
+        <div class="stats-grid">
+          <div class="stat"><small>攻擊力</small><strong id="attackStat">15</strong></div>
+          <div class="stat"><small>金幣</small><strong id="coinStat">0</strong> 🪙</div>
+          <div class="stat"><small>最高樓層</small><strong id="highestStat">1F</strong></div>
+          <div class="stat"><small>答題正確率</small><strong id="accuracyStat">—</strong></div>
+        </div>
+
+        <div class="equipment">
+          <div class="equip"><span>🗡️ 武器</span><span id="weaponText">木劍</span></div>
+          <div class="equip"><span>🛡️ 盔甲</span><span id="armorText">旅人布衣</span></div>
+        </div>
+        <div class="notice" id="bankNotice">進度會自動儲存在此瀏覽器的 <b>localStorage</b>。首次開啟會載入並快取約 7000 字的分層題庫；之後可離線沿用快取。各樓層使用獨立題池，並以長冷卻機制壓低重複率。多益分數為遊戲難度映射，並非正式測驗預測。</div>
+      </div>
+    </section>
+
+    <section class="panel battle">
+      <div class="stage" id="stage">
+        <div class="floor-badge" id="floorBadge">第 1 階</div>
+        <div class="score-badge" id="scoreBadge">TOEIC 約 250</div>
+
+        <div class="combatants">
+          <div class="fighter">
+            <div class="fighter-name" id="playerBattleName">勇者</div>
+            <div class="mini-avatar"><svg class="player-figure" id="battleAvatar" viewBox="0 0 160 160"></svg></div>
+          </div>
+          <div class="fighter">
+            <div class="fighter-name" id="monsterName">史萊姆 Lv.1</div>
+            <div class="monster-figure" id="monsterFigure">🟢</div>
+            <div class="bar-label"><span>怪物 HP</span><span id="monsterHpText">40 / 40</span></div>
+            <div class="enemybar"><div class="enemyfill" id="monsterHpFill" style="width:100%"></div></div>
+          </div>
+        </div>
+        <div class="battle-log" id="battleLog">準備好了。選出正確答案來發動攻擊！</div>
+
+        <div class="result-overlay" id="resultOverlay">
+          <div class="result-card">
+            <div class="result-icon" id="resultIcon">🏆</div>
+            <h3 id="resultTitle">戰鬥勝利</h3>
+            <p id="resultText"></p>
+            <div class="result-buttons" id="resultButtons"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz">
+        <div class="quiz-meta">
+          <span>題目難度：<b id="difficultyText">Lv.1</b>｜本層 <b id="floorPoolSize">—</b> 字</span>
+          <span>連續答對：<b class="combo" id="comboText">0</b></span>
+        </div>
+        <div class="word-card">
+          <div class="word" id="wordText">begin</div>
+          <div class="word-pos" id="wordPos">verb</div>
+          <div class="prompt">請選出最接近的中文意思</div>
+        </div>
+        <div class="answers" id="answers"></div>
+        <div class="feedback" id="feedback">答對後勇者會依攻擊力造成傷害；連續答對 3 題以上會追加連擊傷害。</div>
+        <div class="battle-actions">
+          <span class="tiny">快捷鍵：<span class="kbd">1</span>～<span class="kbd">4</span> 選答案</span>
+        </div>
+      </div>
+    </section>
+
+    <aside class="rightcol">
+      <section class="panel">
+        <div class="panel-title">爬塔進度</div>
+        <div class="panel-body">
+          <div class="tower" id="tower"></div>
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top:14px">
+        <div class="tabs">
+          <button class="tab active" data-tab="shop">裝備商店</button>
+          <button class="tab" data-tab="wrong">錯題本</button>
+        </div>
+        <div class="panel-body">
+          <div class="tab-content active" id="tab-shop">
+            <div class="shop-list" id="shopList"></div>
+          </div>
+          <div class="tab-content" id="tab-wrong">
+            <div class="wrong-list" id="wrongList"></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+</div>
+
+<div style="max-width:1380px;margin:0 auto 22px;padding:0 18px;color:#7587a2;font-size:10px;line-height:1.6">
+  題庫說明：V3 採大考 7000 字級的六級難度概念，建立 7,000 個不重複詞條的個人學習題庫。大型題庫第一次載入時由公開學習資料取得並快取；若來源暫時無法連線，會自動使用內建備援題庫。現行大考中心參考詞彙表約為 6,000 詞，本遊戲的「7000 字級」為擴充學習題庫，不代表現行官方詞表名稱。
+</div>
+
+<div class="modal" id="creatorModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2>建立你的勇者</h2>
+      <button class="btn" id="closeCreatorBtn">關閉</button>
+    </div>
+    <div class="modal-body">
+      <div class="creator">
+        <div class="creator-preview">
+          <svg id="creatorAvatar" width="220" height="220" viewBox="0 0 160 160"></svg>
+        </div>
+        <div>
+          <div class="creator-controls">
+            <div class="field">
+              <label>勇者名稱</label>
+              <input type="text" maxlength="12" id="nameInput" value="Daniel" />
+            </div>
+            <div class="field">
+              <label>角色</label>
+              <select id="genderInput">
+                <option value="male">男勇者</option>
+                <option value="female">女勇者</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>髮型</label>
+              <select id="hairStyleInput">
+                <option value="short">俐落短髮</option>
+                <option value="side">側分</option>
+                <option value="spike">刺蝟短髮</option>
+                <option value="long">長髮</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>膚色</label>
+              <div class="swatches" id="skinSwatches"></div>
+            </div>
+            <div class="field">
+              <label>髮色</label>
+              <div class="swatches" id="hairSwatches"></div>
+            </div>
+            <div class="field">
+              <label>眼睛顏色</label>
+              <div class="swatches" id="eyeSwatches"></div>
+            </div>
+          </div>
+          <div class="notice">外觀不影響能力值。武器與盔甲請用戰鬥獎勵金購買。</div>
+          <div class="creator-footer">
+            <button class="btn primary" id="saveHeroBtn">儲存角色</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+const fallbackFloorVocab = {"1":[{"w":"office","m":"辦公室","p":"noun","floor":1},{"w":"meeting","m":"會議","p":"noun","floor":1},{"w":"customer","m":"顧客","p":"noun","floor":1},{"w":"price","m":"價格","p":"noun","floor":1},{"w":"order","m":"訂單；訂購","p":"noun","floor":1},{"w":"report","m":"報告","p":"noun","floor":1},{"w":"schedule","m":"行程；排程","p":"noun","floor":1},{"w":"travel","m":"旅行；出差","p":"noun","floor":1},{"w":"manager","m":"經理；主管","p":"noun","floor":1},{"w":"factory","m":"工廠","p":"noun","floor":1},{"w":"product","m":"產品","p":"noun","floor":1},{"w":"service","m":"服務","p":"noun","floor":1},{"w":"email","m":"電子郵件","p":"noun","floor":1},{"w":"phone","m":"電話","p":"noun","floor":1},{"w":"desk","m":"書桌；辦公桌","p":"noun","floor":1},{"w":"lunch","m":"午餐","p":"noun","floor":1},{"w":"train","m":"火車","p":"noun","floor":1},{"w":"hotel","m":"飯店","p":"noun","floor":1},{"w":"ticket","m":"票券","p":"noun","floor":1},{"w":"address","m":"地址","p":"noun","floor":1},{"w":"number","m":"號碼；數字","p":"noun","floor":1}],"2":[{"w":"arrive","m":"抵達","p":"verb","floor":2},{"w":"leave","m":"離開","p":"verb","floor":2},{"w":"send","m":"寄送；傳送","p":"verb","floor":2},{"w":"receive","m":"收到；接收","p":"verb","floor":2},{"w":"buy","m":"購買","p":"verb","floor":2},{"w":"sell","m":"販售","p":"verb","floor":2},{"w":"pay","m":"付款","p":"verb","floor":2},{"w":"call","m":"打電話；呼叫","p":"verb","floor":2},{"w":"help","m":"幫助","p":"verb","floor":2},{"w":"open","m":"打開；開放","p":"verb","floor":2},{"w":"close","m":"關閉","p":"verb","floor":2},{"w":"start","m":"開始","p":"verb","floor":2},{"w":"finish","m":"完成；結束","p":"verb","floor":2},{"w":"wait","m":"等待","p":"verb","floor":2},{"w":"visit","m":"拜訪","p":"verb","floor":2},{"w":"work","m":"工作","p":"verb","floor":2},{"w":"check","m":"檢查","p":"verb","floor":2},{"w":"sign","m":"簽署","p":"verb","floor":2},{"w":"move","m":"移動；搬遷","p":"verb","floor":2},{"w":"choose","m":"選擇","p":"verb","floor":2},{"w":"bring","m":"帶來","p":"verb","floor":2}],"3":[{"w":"company","m":"公司","p":"noun","floor":3},{"w":"employee","m":"員工","p":"noun","floor":3},{"w":"department","m":"部門","p":"noun","floor":3},{"w":"client","m":"客戶","p":"noun","floor":3},{"w":"supplier","m":"供應商","p":"noun","floor":3},{"w":"invoice","m":"發票；請款單","p":"noun","floor":3},{"w":"shipment","m":"出貨；貨運批次","p":"noun","floor":3},{"w":"package","m":"包裹；套裝","p":"noun","floor":3},{"w":"document","m":"文件","p":"noun","floor":3},{"w":"contract","m":"合約","p":"noun","floor":3},{"w":"project","m":"專案","p":"noun","floor":3},{"w":"team","m":"團隊","p":"noun","floor":3},{"w":"market","m":"市場","p":"noun","floor":3},{"w":"store","m":"商店","p":"noun","floor":3},{"w":"branch","m":"分公司；分店","p":"noun","floor":3},{"w":"machine","m":"機器","p":"noun","floor":3},{"w":"equipment","m":"設備","p":"noun","floor":3},{"w":"delivery","m":"配送；交貨","p":"noun","floor":3},{"w":"payment","m":"付款","p":"noun","floor":3},{"w":"budget","m":"預算","p":"noun","floor":3},{"w":"salary","m":"薪資","p":"noun","floor":3}],"4":[{"w":"confirm","m":"確認","p":"verb","floor":4},{"w":"cancel","m":"取消","p":"verb","floor":4},{"w":"repair","m":"修理","p":"verb","floor":4},{"w":"reserve","m":"預訂；保留","p":"verb","floor":4},{"w":"attend","m":"出席；參加","p":"verb","floor":4},{"w":"explain","m":"解釋","p":"verb","floor":4},{"w":"prepare","m":"準備","p":"verb","floor":4},{"w":"return","m":"歸還；返回","p":"verb","floor":4},{"w":"borrow","m":"借入","p":"verb","floor":4},{"w":"replace","m":"更換；取代","p":"verb","floor":4},{"w":"contact","m":"聯絡","p":"verb","floor":4},{"w":"invite","m":"邀請","p":"verb","floor":4},{"w":"deliver","m":"交付；配送","p":"verb","floor":4},{"w":"arrange","m":"安排","p":"verb","floor":4},{"w":"decide","m":"決定","p":"verb","floor":4},{"w":"accept","m":"接受","p":"verb","floor":4},{"w":"request","m":"要求；請求","p":"verb","floor":4},{"w":"answer","m":"回答","p":"verb","floor":4},{"w":"follow","m":"遵循；跟隨","p":"verb","floor":4},{"w":"enter","m":"進入；輸入","p":"verb","floor":4},{"w":"complete","m":"完成","p":"verb","floor":4}],"5":[{"w":"available","m":"可取得的；有空的","p":"adjective","floor":5},{"w":"busy","m":"忙碌的","p":"adjective","floor":5},{"w":"early","m":"提早的；早期的","p":"adjective","floor":5},{"w":"late","m":"遲到的；晚的","p":"adjective","floor":5},{"w":"local","m":"當地的","p":"adjective","floor":5},{"w":"international","m":"國際的","p":"adjective","floor":5},{"w":"urgent","m":"緊急的","p":"adjective","floor":5},{"w":"convenient","m":"方便的","p":"adjective","floor":5},{"w":"popular","m":"受歡迎的","p":"adjective","floor":5},{"w":"successful","m":"成功的","p":"adjective","floor":5},{"w":"useful","m":"有用的","p":"adjective","floor":5},{"w":"safe","m":"安全的","p":"adjective","floor":5},{"w":"ready","m":"準備好的","p":"adjective","floor":5},{"w":"possible","m":"可能的","p":"adjective","floor":5},{"w":"simple","m":"簡單的","p":"adjective","floor":5},{"w":"modern","m":"現代的","p":"adjective","floor":5},{"w":"private","m":"私人的；非公開的","p":"adjective","floor":5},{"w":"public","m":"公開的；公共的","p":"adjective","floor":5},{"w":"direct","m":"直接的","p":"adjective","floor":5},{"w":"free","m":"免費的；空閒的","p":"adjective","floor":5},{"w":"correct","m":"正確的","p":"adjective","floor":5}],"6":[{"w":"annual","m":"每年的；年度的","p":"adjective","floor":6},{"w":"monthly","m":"每月的","p":"adjective","floor":6},{"w":"weekly","m":"每週的","p":"adjective","floor":6},{"w":"temporary","m":"暫時的；臨時的","p":"adjective","floor":6},{"w":"permanent","m":"永久的","p":"adjective","floor":6},{"w":"recent","m":"最近的","p":"adjective","floor":6},{"w":"current","m":"目前的","p":"adjective","floor":6},{"w":"future","m":"未來的","p":"adjective","floor":6},{"w":"previous","m":"先前的","p":"adjective","floor":6},{"w":"additional","m":"額外的","p":"adjective","floor":6},{"w":"basic","m":"基本的","p":"adjective","floor":6},{"w":"common","m":"常見的","p":"adjective","floor":6},{"w":"standard","m":"標準的","p":"adjective","floor":6},{"w":"formal","m":"正式的","p":"adjective","floor":6},{"w":"personal","m":"個人的","p":"adjective","floor":6},{"w":"general","m":"一般的；整體的","p":"adjective","floor":6},{"w":"special","m":"特殊的","p":"adjective","floor":6},{"w":"major","m":"主要的","p":"adjective","floor":6},{"w":"minor","m":"次要的","p":"adjective","floor":6},{"w":"regular","m":"定期的；一般的","p":"adjective","floor":6},{"w":"final","m":"最後的；最終的","p":"adjective","floor":6}],"7":[{"w":"approve","m":"核准","p":"verb","floor":7},{"w":"provide","m":"提供","p":"verb","floor":7},{"w":"require","m":"需要；要求","p":"verb","floor":7},{"w":"maintain","m":"維持；保養","p":"verb","floor":7},{"w":"increase","m":"增加","p":"verb","floor":7},{"w":"reduce","m":"減少","p":"verb","floor":7},{"w":"improve","m":"改善；提升","p":"verb","floor":7},{"w":"support","m":"支持","p":"verb","floor":7},{"w":"compare","m":"比較","p":"verb","floor":7},{"w":"include","m":"包含","p":"verb","floor":7},{"w":"develop","m":"發展；開發","p":"verb","floor":7},{"w":"manage","m":"管理","p":"verb","floor":7},{"w":"operate","m":"操作；營運","p":"verb","floor":7},{"w":"produce","m":"生產；產生","p":"verb","floor":7},{"w":"inspect","m":"檢查；稽核","p":"verb","floor":7},{"w":"install","m":"安裝","p":"verb","floor":7},{"w":"update","m":"更新","p":"verb","floor":7},{"w":"revise","m":"修訂","p":"verb","floor":7},{"w":"submit","m":"提交","p":"verb","floor":7},{"w":"notify","m":"通知","p":"verb","floor":7},{"w":"purchase","m":"採購；購買","p":"verb","floor":7}],"8":[{"w":"expense","m":"費用；支出","p":"noun","floor":8},{"w":"revenue","m":"營收","p":"noun","floor":8},{"w":"profit","m":"利潤","p":"noun","floor":8},{"w":"cost","m":"成本","p":"noun","floor":8},{"w":"discount","m":"折扣","p":"noun","floor":8},{"w":"refund","m":"退款","p":"noun","floor":8},{"w":"warranty","m":"保固","p":"noun","floor":8},{"w":"account","m":"帳戶；帳目","p":"noun","floor":8},{"w":"balance","m":"餘額；平衡","p":"noun","floor":8},{"w":"cash","m":"現金","p":"noun","floor":8},{"w":"credit","m":"信用；信用額度","p":"noun","floor":8},{"w":"tax","m":"稅金","p":"noun","floor":8},{"w":"fee","m":"費用","p":"noun","floor":8},{"w":"rent","m":"租金","p":"noun","floor":8},{"w":"loan","m":"貸款","p":"noun","floor":8},{"w":"receipt","m":"收據","p":"noun","floor":8},{"w":"deposit","m":"訂金；存款","p":"noun","floor":8},{"w":"income","m":"收入","p":"noun","floor":8},{"w":"insurance","m":"保險","p":"noun","floor":8},{"w":"charge","m":"收費；費用","p":"noun","floor":8},{"w":"commission","m":"佣金；委員會","p":"noun","floor":8}],"9":[{"w":"interview","m":"面試；訪談","p":"noun","floor":9},{"w":"candidate","m":"候選人；應徵者","p":"noun","floor":9},{"w":"position","m":"職位；位置","p":"noun","floor":9},{"w":"career","m":"職涯","p":"noun","floor":9},{"w":"training","m":"訓練","p":"noun","floor":9},{"w":"skill","m":"技能","p":"noun","floor":9},{"w":"experience","m":"經驗","p":"noun","floor":9},{"w":"supervisor","m":"主管；督導","p":"noun","floor":9},{"w":"colleague","m":"同事","p":"noun","floor":9},{"w":"staff","m":"職員；人員","p":"noun","floor":9},{"w":"duty","m":"職責","p":"noun","floor":9},{"w":"task","m":"任務","p":"noun","floor":9},{"w":"shift","m":"班別；輪班","p":"noun","floor":9},{"w":"overtime","m":"加班","p":"noun","floor":9},{"w":"vacation","m":"休假","p":"noun","floor":9},{"w":"benefit","m":"福利；好處","p":"noun","floor":9},{"w":"promotion","m":"升遷；促銷","p":"noun","floor":9},{"w":"vacancy","m":"職缺；空缺","p":"noun","floor":9},{"w":"recruit","m":"新進人員；招募","p":"noun","floor":9},{"w":"hire","m":"雇用","p":"noun","floor":9},{"w":"resign","m":"辭職","p":"verb","floor":9}],"10":[{"w":"warehouse","m":"倉庫","p":"noun","floor":10},{"w":"inventory","m":"庫存","p":"noun","floor":10},{"w":"stock","m":"庫存；存貨","p":"noun","floor":10},{"w":"supply","m":"供應；供應品","p":"noun","floor":10},{"w":"material","m":"材料","p":"noun","floor":10},{"w":"quantity","m":"數量","p":"noun","floor":10},{"w":"quality","m":"品質","p":"noun","floor":10},{"w":"sample","m":"樣品","p":"noun","floor":10},{"w":"defect","m":"缺陷","p":"noun","floor":10},{"w":"storage","m":"儲存；倉儲","p":"noun","floor":10},{"w":"transport","m":"運輸","p":"noun","floor":10},{"w":"carrier","m":"承運商；載具","p":"noun","floor":10},{"w":"freight","m":"貨運；運費","p":"noun","floor":10},{"w":"parcel","m":"包裹","p":"noun","floor":10},{"w":"destination","m":"目的地","p":"noun","floor":10},{"w":"route","m":"路線","p":"noun","floor":10},{"w":"vehicle","m":"車輛","p":"noun","floor":10},{"w":"fuel","m":"燃料","p":"noun","floor":10},{"w":"loading","m":"裝載","p":"noun","floor":10},{"w":"packaging","m":"包裝","p":"noun","floor":10},{"w":"label","m":"標籤","p":"noun","floor":10}],"11":[{"w":"allocate","m":"分配","p":"verb","floor":11},{"w":"negotiate","m":"協商；談判","p":"verb","floor":11},{"w":"comply","m":"遵守","p":"verb","floor":11},{"w":"implement","m":"實施；執行","p":"verb","floor":11},{"w":"distribute","m":"分配；配送","p":"verb","floor":11},{"w":"supervise","m":"監督","p":"verb","floor":11},{"w":"retain","m":"保留；維持","p":"verb","floor":11},{"w":"postpone","m":"延後；延期","p":"verb","floor":11},{"w":"estimate","m":"估計；估價","p":"verb","floor":11},{"w":"conduct","m":"進行；執行","p":"verb","floor":11},{"w":"coordinate","m":"協調","p":"verb","floor":11},{"w":"monitor","m":"監控","p":"verb","floor":11},{"w":"evaluate","m":"評估","p":"verb","floor":11},{"w":"analyze","m":"分析","p":"verb","floor":11},{"w":"establish","m":"建立","p":"verb","floor":11},{"w":"launch","m":"推出；啟動","p":"verb","floor":11},{"w":"expand","m":"擴展","p":"verb","floor":11},{"w":"secure","m":"取得；確保","p":"verb","floor":11},{"w":"resolve","m":"解決","p":"verb","floor":11},{"w":"identify","m":"辨識；確認","p":"verb","floor":11},{"w":"prevent","m":"預防；避免","p":"verb","floor":11}],"12":[{"w":"proposal","m":"提案；建議案","p":"noun","floor":12},{"w":"criteria","m":"標準；準則","p":"noun","floor":12},{"w":"inspection","m":"檢查；稽核","p":"noun","floor":12},{"w":"subscription","m":"訂閱；訂購","p":"noun","floor":12},{"w":"facility","m":"設施；場所","p":"noun","floor":12},{"w":"procedure","m":"程序；流程","p":"noun","floor":12},{"w":"policy","m":"政策；規範","p":"noun","floor":12},{"w":"guideline","m":"指引；準則","p":"noun","floor":12},{"w":"regulation","m":"法規；規定","p":"noun","floor":12},{"w":"requirement","m":"要求；必要條件","p":"noun","floor":12},{"w":"deadline","m":"截止期限","p":"noun","floor":12},{"w":"priority","m":"優先事項","p":"noun","floor":12},{"w":"objective","m":"目標","p":"noun","floor":12},{"w":"strategy","m":"策略","p":"noun","floor":12},{"w":"resource","m":"資源","p":"noun","floor":12},{"w":"responsibility","m":"責任","p":"noun","floor":12},{"w":"authority","m":"權限；主管機關","p":"noun","floor":12},{"w":"permission","m":"許可","p":"noun","floor":12},{"w":"approval","m":"核准；批准","p":"noun","floor":12},{"w":"agreement","m":"協議；同意","p":"noun","floor":12},{"w":"condition","m":"條件；狀況","p":"noun","floor":12}],"13":[{"w":"marketing","m":"行銷","p":"noun","floor":13},{"w":"advertisement","m":"廣告","p":"noun","floor":13},{"w":"campaign","m":"宣傳活動；行銷活動","p":"noun","floor":13},{"w":"consumer","m":"消費者","p":"noun","floor":13},{"w":"demand","m":"需求","p":"noun","floor":13},{"w":"survey","m":"調查","p":"noun","floor":13},{"w":"feedback","m":"回饋","p":"noun","floor":13},{"w":"competitor","m":"競爭者","p":"noun","floor":13},{"w":"brand","m":"品牌","p":"noun","floor":13},{"w":"sales","m":"銷售額；銷售工作","p":"noun","floor":13},{"w":"demographic","m":"人口統計族群","p":"noun","floor":13},{"w":"trend","m":"趨勢","p":"noun","floor":13},{"w":"region","m":"區域","p":"noun","floor":13},{"w":"segment","m":"市場區隔；部分","p":"noun","floor":13},{"w":"channel","m":"通路；管道","p":"noun","floor":13},{"w":"retail","m":"零售","p":"noun","floor":13},{"w":"wholesale","m":"批發","p":"noun","floor":13},{"w":"loyalty","m":"忠誠度","p":"noun","floor":13},{"w":"reputation","m":"聲譽","p":"noun","floor":13},{"w":"publicity","m":"宣傳；曝光","p":"noun","floor":13},{"w":"merchandise","m":"商品","p":"noun","floor":13}],"14":[{"w":"conference","m":"會議；大型研討會","p":"noun","floor":14},{"w":"seminar","m":"研討會","p":"noun","floor":14},{"w":"presentation","m":"簡報；發表","p":"noun","floor":14},{"w":"agenda","m":"議程","p":"noun","floor":14},{"w":"participant","m":"參與者","p":"noun","floor":14},{"w":"speaker","m":"講者","p":"noun","floor":14},{"w":"venue","m":"場地","p":"noun","floor":14},{"w":"registration","m":"註冊；報名","p":"noun","floor":14},{"w":"session","m":"場次；會期","p":"noun","floor":14},{"w":"workshop","m":"工作坊","p":"noun","floor":14},{"w":"announcement","m":"公告","p":"noun","floor":14},{"w":"reservation","m":"預約；訂位","p":"noun","floor":14},{"w":"accommodation","m":"住宿","p":"noun","floor":14},{"w":"itinerary","m":"行程表","p":"noun","floor":14},{"w":"reception","m":"接待；招待會","p":"noun","floor":14},{"w":"banquet","m":"宴會","p":"noun","floor":14},{"w":"exhibit","m":"展品；展覽","p":"noun","floor":14},{"w":"brochure","m":"宣傳手冊","p":"noun","floor":14},{"w":"audience","m":"觀眾；聽眾","p":"noun","floor":14},{"w":"certificate","m":"證書","p":"noun","floor":14},{"w":"networking","m":"人脈交流","p":"noun","floor":14}],"15":[{"w":"feasible","m":"可行的","p":"adjective","floor":15},{"w":"mandatory","m":"強制的；必須的","p":"adjective","floor":15},{"w":"eligible","m":"符合資格的","p":"adjective","floor":15},{"w":"efficient","m":"有效率的","p":"adjective","floor":15},{"w":"accurate","m":"精確的","p":"adjective","floor":15},{"w":"reliable","m":"可靠的","p":"adjective","floor":15},{"w":"flexible","m":"有彈性的","p":"adjective","floor":15},{"w":"competitive","m":"有競爭力的","p":"adjective","floor":15},{"w":"profitable","m":"有利潤的","p":"adjective","floor":15},{"w":"valuable","m":"有價值的","p":"adjective","floor":15},{"w":"sufficient","m":"足夠的","p":"adjective","floor":15},{"w":"appropriate","m":"適當的","p":"adjective","floor":15},{"w":"effective","m":"有效的","p":"adjective","floor":15},{"w":"consistent","m":"一致的；穩定的","p":"adjective","floor":15},{"w":"significant","m":"重大的；顯著的","p":"adjective","floor":15},{"w":"accessible","m":"可取得的；易接近的","p":"adjective","floor":15},{"w":"reasonable","m":"合理的","p":"adjective","floor":15},{"w":"specific","m":"特定的；明確的","p":"adjective","floor":15},{"w":"independent","m":"獨立的","p":"adjective","floor":15},{"w":"familiar","m":"熟悉的","p":"adjective","floor":15},{"w":"professional","m":"專業的","p":"adjective","floor":15}],"16":[{"w":"consolidate","m":"整合；合併","p":"verb","floor":16},{"w":"designate","m":"指定；指派","p":"verb","floor":16},{"w":"facilitate","m":"促進；使便利","p":"verb","floor":16},{"w":"relocate","m":"搬遷；重新安置","p":"verb","floor":16},{"w":"verify","m":"驗證；核實","p":"verb","floor":16},{"w":"amend","m":"修正；修改","p":"verb","floor":16},{"w":"acquire","m":"取得；收購","p":"verb","floor":16},{"w":"assess","m":"評估","p":"verb","floor":16},{"w":"authorize","m":"授權；核准","p":"verb","floor":16},{"w":"classify","m":"分類","p":"verb","floor":16},{"w":"compile","m":"彙整；編纂","p":"verb","floor":16},{"w":"consult","m":"諮詢；商議","p":"verb","floor":16},{"w":"demonstrate","m":"展示；證明","p":"verb","floor":16},{"w":"enforce","m":"執行；強制實施","p":"verb","floor":16},{"w":"forecast","m":"預測","p":"verb","floor":16},{"w":"generate","m":"產生","p":"verb","floor":16},{"w":"integrate","m":"整合","p":"verb","floor":16},{"w":"modify","m":"修改","p":"verb","floor":16},{"w":"prioritize","m":"排定優先順序","p":"verb","floor":16},{"w":"recommend","m":"推薦；建議","p":"verb","floor":16},{"w":"streamline","m":"精簡；使更有效率","p":"verb","floor":16}],"17":[{"w":"procurement","m":"採購","p":"noun","floor":17},{"w":"specification","m":"規格；詳細要求","p":"noun","floor":17},{"w":"expenditure","m":"支出；開支","p":"noun","floor":17},{"w":"incentive","m":"誘因；獎勵","p":"noun","floor":17},{"w":"contingency","m":"意外狀況；應變事項","p":"noun","floor":17},{"w":"discrepancy","m":"差異；不一致","p":"noun","floor":17},{"w":"compliance","m":"遵循；合規","p":"noun","floor":17},{"w":"validation","m":"驗證","p":"noun","floor":17},{"w":"transaction","m":"交易","p":"noun","floor":17},{"w":"allocation","m":"分配；配置","p":"noun","floor":17},{"w":"negotiation","m":"談判；協商","p":"noun","floor":17},{"w":"maintenance","m":"維護；保養","p":"noun","floor":17},{"w":"implementation","m":"實施","p":"noun","floor":17},{"w":"distribution","m":"分配；配送","p":"noun","floor":17},{"w":"supervision","m":"監督","p":"noun","floor":17},{"w":"retention","m":"保留；留任","p":"noun","floor":17},{"w":"postponement","m":"延期","p":"noun","floor":17},{"w":"assessment","m":"評估","p":"noun","floor":17},{"w":"authorization","m":"授權；核准","p":"noun","floor":17},{"w":"classification","m":"分類","p":"noun","floor":17},{"w":"consultation","m":"諮詢","p":"noun","floor":17}],"18":[{"w":"substantial","m":"大量的；重大的","p":"adjective","floor":18},{"w":"consecutive","m":"連續的","p":"adjective","floor":18},{"w":"preliminary","m":"初步的；預備的","p":"adjective","floor":18},{"w":"comprehensive","m":"全面的；綜合的","p":"adjective","floor":18},{"w":"strategic","m":"策略性的","p":"adjective","floor":18},{"w":"operational","m":"營運的；操作上的","p":"adjective","floor":18},{"w":"financial","m":"財務的","p":"adjective","floor":18},{"w":"technical","m":"技術的","p":"adjective","floor":18},{"w":"administrative","m":"行政的","p":"adjective","floor":18},{"w":"commercial","m":"商業的","p":"adjective","floor":18},{"w":"corporate","m":"企業的","p":"adjective","floor":18},{"w":"regional","m":"區域性的","p":"adjective","floor":18},{"w":"domestic","m":"國內的；家庭的","p":"adjective","floor":18},{"w":"external","m":"外部的","p":"adjective","floor":18},{"w":"internal","m":"內部的","p":"adjective","floor":18},{"w":"mutual","m":"相互的；共同的","p":"adjective","floor":18},{"w":"potential","m":"潛在的","p":"adjective","floor":18},{"w":"immediate","m":"立即的；當前的","p":"adjective","floor":18},{"w":"gradual","m":"逐漸的","p":"adjective","floor":18},{"w":"stable","m":"穩定的","p":"adjective","floor":18},{"w":"diverse","m":"多元的","p":"adjective","floor":18}],"19":[{"w":"fluctuate","m":"波動","p":"verb","floor":19},{"w":"deteriorate","m":"惡化；劣化","p":"verb","floor":19},{"w":"reimburse","m":"償還；報銷","p":"verb","floor":19},{"w":"diversify","m":"多角化；多樣化","p":"verb","floor":19},{"w":"outsource","m":"外包","p":"verb","floor":19},{"w":"manufacture","m":"製造","p":"verb","floor":19},{"w":"collaborate","m":"合作","p":"verb","floor":19},{"w":"specialize","m":"專精於","p":"verb","floor":19},{"w":"advertise","m":"刊登廣告；宣傳","p":"verb","floor":19},{"w":"customize","m":"客製化","p":"verb","floor":19},{"w":"dispatch","m":"派送；派遣","p":"verb","floor":19},{"w":"renovate","m":"翻修；整修","p":"verb","floor":19},{"w":"transfer","m":"轉移；調任","p":"verb","floor":19},{"w":"withdraw","m":"撤回；提領","p":"verb","floor":19},{"w":"compensate","m":"補償","p":"verb","floor":19},{"w":"automate","m":"自動化","p":"verb","floor":19},{"w":"merge","m":"合併","p":"verb","floor":19},{"w":"restructure","m":"重組","p":"verb","floor":19},{"w":"terminate","m":"終止","p":"verb","floor":19},{"w":"renew","m":"續約；更新","p":"verb","floor":19},{"w":"benchmark","m":"以標竿為基準比較","p":"verb","floor":19}],"20":[{"w":"capacity","m":"產能；容量","p":"noun","floor":20},{"w":"productivity","m":"生產力","p":"noun","floor":20},{"w":"efficiency","m":"效率","p":"noun","floor":20},{"w":"turnover","m":"營業額；人員流動率","p":"noun","floor":20},{"w":"infrastructure","m":"基礎設施","p":"noun","floor":20},{"w":"subsidiary","m":"子公司","p":"noun","floor":20},{"w":"headquarters","m":"總部","p":"noun","floor":20},{"w":"franchise","m":"加盟權；特許經營","p":"noun","floor":20},{"w":"partnership","m":"合作關係；合夥","p":"noun","floor":20},{"w":"acquisition","m":"收購；取得","p":"noun","floor":20},{"w":"merger","m":"合併","p":"noun","floor":20},{"w":"asset","m":"資產","p":"noun","floor":20},{"w":"liability","m":"負債；責任","p":"noun","floor":20},{"w":"shareholder","m":"股東","p":"noun","floor":20},{"w":"dividend","m":"股利","p":"noun","floor":20},{"w":"investment","m":"投資","p":"noun","floor":20},{"w":"portfolio","m":"投資組合；作品集","p":"noun","floor":20},{"w":"projection","m":"預測；推估","p":"noun","floor":20},{"w":"margin","m":"利潤率；邊際","p":"noun","floor":20},{"w":"quota","m":"配額；業績目標","p":"noun","floor":20},{"w":"surplus","m":"盈餘；剩餘","p":"noun","floor":20}],"21":[{"w":"mitigate","m":"減輕；緩和","p":"verb","floor":21},{"w":"scrutinize","m":"仔細審查","p":"verb","floor":21},{"w":"endorse","m":"支持；背書","p":"verb","floor":21},{"w":"rectify","m":"修正；矯正","p":"verb","floor":21},{"w":"corroborate","m":"證實；佐證","p":"verb","floor":21},{"w":"ascertain","m":"查明；確定","p":"verb","floor":21},{"w":"expedite","m":"加速；促進","p":"verb","floor":21},{"w":"formulate","m":"制定；規劃","p":"verb","floor":21},{"w":"leverage","m":"善用；利用","p":"verb","floor":21},{"w":"optimize","m":"最佳化","p":"verb","floor":21},{"w":"reconcile","m":"調和；核對一致","p":"verb","floor":21},{"w":"undertake","m":"承擔；著手進行","p":"verb","floor":21},{"w":"validate","m":"驗證","p":"verb","floor":21},{"w":"articulate","m":"清楚表達","p":"verb","floor":21},{"w":"delegate","m":"委派","p":"verb","floor":21},{"w":"disclose","m":"揭露","p":"verb","floor":21},{"w":"differentiate","m":"區分；差異化","p":"verb","floor":21},{"w":"eliminate","m":"消除","p":"verb","floor":21},{"w":"anticipate","m":"預期；預見","p":"verb","floor":21},{"w":"justify","m":"證明合理；辯護","p":"verb","floor":21},{"w":"quantify","m":"量化","p":"verb","floor":21}],"22":[{"w":"viable","m":"可行且能持續的","p":"adjective","floor":22},{"w":"obsolete","m":"過時的；淘汰的","p":"adjective","floor":22},{"w":"intricate","m":"錯綜複雜的","p":"adjective","floor":22},{"w":"lucrative","m":"獲利豐厚的","p":"adjective","floor":22},{"w":"unanimous","m":"全體一致的","p":"adjective","floor":22},{"w":"resilient","m":"有韌性的；能快速恢復的","p":"adjective","floor":22},{"w":"stringent","m":"嚴格的；嚴苛的","p":"adjective","floor":22},{"w":"tentative","m":"暫定的；試探性的","p":"adjective","floor":22},{"w":"detrimental","m":"有害的；不利的","p":"adjective","floor":22},{"w":"conducive","m":"有助於…的","p":"adjective","floor":22},{"w":"meticulous","m":"一絲不苟的","p":"adjective","floor":22},{"w":"unprecedented","m":"前所未有的","p":"adjective","floor":22},{"w":"sustainable","m":"可持續的","p":"adjective","floor":22},{"w":"transparent","m":"透明的；公開清楚的","p":"adjective","floor":22},{"w":"prominent","m":"重要的；突出的","p":"adjective","floor":22},{"w":"versatile","m":"多才多藝的；多用途的","p":"adjective","floor":22},{"w":"provisional","m":"暫定的；臨時的","p":"adjective","floor":22},{"w":"ambiguous","m":"模稜兩可的","p":"adjective","floor":22},{"w":"comparable","m":"可比較的；相當的","p":"adjective","floor":22},{"w":"compatible","m":"相容的","p":"adjective","floor":22},{"w":"confidential","m":"機密的","p":"adjective","floor":22}],"23":[{"w":"prerequisite","m":"先決條件","p":"noun","floor":23},{"w":"repercussion","m":"後果；連鎖影響","p":"noun","floor":23},{"w":"constraint","m":"限制；約束","p":"noun","floor":23},{"w":"deviation","m":"偏差；偏離","p":"noun","floor":23},{"w":"milestone","m":"里程碑","p":"noun","floor":23},{"w":"stakeholder","m":"利害關係人","p":"noun","floor":23},{"w":"consensus","m":"共識","p":"noun","floor":23},{"w":"rationale","m":"理由；理論依據","p":"noun","floor":23},{"w":"initiative","m":"主動措施；倡議","p":"noun","floor":23},{"w":"provision","m":"條款；供應","p":"noun","floor":23},{"w":"obligation","m":"義務","p":"noun","floor":23},{"w":"entitlement","m":"權利；應得權益","p":"noun","floor":23},{"w":"competency","m":"能力；勝任程度","p":"noun","floor":23},{"w":"integrity","m":"誠信；完整性","p":"noun","floor":23},{"w":"accountability","m":"問責；責任歸屬","p":"noun","floor":23},{"w":"credibility","m":"可信度","p":"noun","floor":23},{"w":"feasibility","m":"可行性","p":"noun","floor":23},{"w":"sustainability","m":"永續性","p":"noun","floor":23},{"w":"volatility","m":"波動性","p":"noun","floor":23},{"w":"redundancy","m":"冗餘；裁員","p":"noun","floor":23},{"w":"framework","m":"架構","p":"noun","floor":23}],"24":[{"w":"disseminate","m":"散布；傳播","p":"verb","floor":24},{"w":"impede","m":"阻礙","p":"verb","floor":24},{"w":"underpin","m":"支撐；構成基礎","p":"verb","floor":24},{"w":"proliferate","m":"迅速增加；擴散","p":"verb","floor":24},{"w":"alleviate","m":"緩解；減輕","p":"verb","floor":24},{"w":"constrain","m":"限制；約束","p":"verb","floor":24},{"w":"capitalize","m":"利用；資本化","p":"verb","floor":24},{"w":"decentralize","m":"分權；去中心化","p":"verb","floor":24},{"w":"overhaul","m":"全面檢修；徹底改革","p":"verb","floor":24},{"w":"accelerate","m":"加速","p":"verb","floor":24},{"w":"reallocate","m":"重新分配","p":"verb","floor":24},{"w":"standardize","m":"標準化","p":"verb","floor":24},{"w":"synchronize","m":"同步","p":"verb","floor":24},{"w":"troubleshoot","m":"排除故障","p":"verb","floor":24},{"w":"safeguard","m":"保護；保障","p":"verb","floor":24},{"w":"substantiate","m":"證實；提供證據支持","p":"verb","floor":24},{"w":"revitalize","m":"振興；恢復活力","p":"verb","floor":24},{"w":"mobilize","m":"動員；調度","p":"verb","floor":24},{"w":"refine","m":"改進；精煉","p":"verb","floor":24},{"w":"simulate","m":"模擬","p":"verb","floor":24},{"w":"calibrate","m":"校正","p":"verb","floor":24}],"25":[{"w":"inadvertently","m":"無意間；不經意地","p":"adverb","floor":25},{"w":"predominantly","m":"主要地；占多數地","p":"adverb","floor":25},{"w":"substantially","m":"大幅地；實質上","p":"adverb","floor":25},{"w":"relatively","m":"相對地","p":"adverb","floor":25},{"w":"mutually","m":"相互地","p":"adverb","floor":25},{"w":"strategically","m":"策略性地","p":"adverb","floor":25},{"w":"efficiently","m":"有效率地","p":"adverb","floor":25},{"w":"explicitly","m":"明確地","p":"adverb","floor":25},{"w":"implicitly","m":"含蓄地；隱含地","p":"adverb","floor":25},{"w":"consistently","m":"一致地；持續地","p":"adverb","floor":25},{"w":"periodically","m":"定期地","p":"adverb","floor":25},{"w":"promptly","m":"迅速地；準時地","p":"adverb","floor":25},{"w":"thoroughly","m":"徹底地","p":"adverb","floor":25},{"w":"cautiously","m":"謹慎地","p":"adverb","floor":25},{"w":"simultaneously","m":"同時地","p":"adverb","floor":25},{"w":"accordingly","m":"因此；相應地","p":"adverb","floor":25},{"w":"otherwise","m":"否則；以其他方式","p":"adverb","floor":25},{"w":"ultimately","m":"最終地","p":"adverb","floor":25},{"w":"increasingly","m":"日益；越來越","p":"adverb","floor":25},{"w":"exceptionally","m":"異常地；格外地","p":"adverb","floor":25},{"w":"approximately","m":"大約地","p":"adverb","floor":25}],"26":[{"w":"governance","m":"治理；管理制度","p":"noun","floor":26},{"w":"remuneration","m":"薪酬；報酬","p":"noun","floor":26},{"w":"insolvency","m":"無償債能力；破產狀態","p":"noun","floor":26},{"w":"liquidity","m":"流動性；資金變現能力","p":"noun","floor":26},{"w":"depreciation","m":"折舊；貶值","p":"noun","floor":26},{"w":"amortization","m":"攤銷","p":"noun","floor":26},{"w":"valuation","m":"估值","p":"noun","floor":26},{"w":"equity","m":"股權；淨值","p":"noun","floor":26},{"w":"collateral","m":"擔保品","p":"noun","floor":26},{"w":"covenant","m":"契約條款；承諾","p":"noun","floor":26},{"w":"yield","m":"收益率；產出率","p":"noun","floor":26},{"w":"divestiture","m":"資產剝離；出售事業","p":"noun","floor":26},{"w":"capitalization","m":"資本化；市值","p":"noun","floor":26},{"w":"solvency","m":"償債能力","p":"noun","floor":26},{"w":"receivable","m":"應收帳款","p":"noun","floor":26},{"w":"payable","m":"應付帳款","p":"noun","floor":26},{"w":"impairment","m":"減損","p":"noun","floor":26},{"w":"reimbursement","m":"報銷；償還","p":"noun","floor":26},{"w":"underwriting","m":"承銷；核保","p":"noun","floor":26},{"w":"brokerage","m":"仲介業務；佣金","p":"noun","floor":26},{"w":"fiduciary","m":"受託人；受信義務者","p":"noun","floor":26}],"27":[{"w":"arbitration","m":"仲裁","p":"noun","floor":27},{"w":"litigation","m":"訴訟","p":"noun","floor":27},{"w":"legislation","m":"立法；法規","p":"noun","floor":27},{"w":"statute","m":"成文法；法令","p":"noun","floor":27},{"w":"ordinance","m":"條例；法令","p":"noun","floor":27},{"w":"precedent","m":"先例；判例","p":"noun","floor":27},{"w":"disclosure","m":"揭露","p":"noun","floor":27},{"w":"confidentiality","m":"保密性","p":"noun","floor":27},{"w":"indemnity","m":"賠償保障；補償","p":"noun","floor":27},{"w":"infringement","m":"侵權","p":"noun","floor":27},{"w":"patent","m":"專利","p":"noun","floor":27},{"w":"trademark","m":"商標","p":"noun","floor":27},{"w":"copyright","m":"著作權","p":"noun","floor":27},{"w":"consent","m":"同意；許可","p":"noun","floor":27},{"w":"waiver","m":"權利放棄；豁免","p":"noun","floor":27},{"w":"breach","m":"違約；違反","p":"noun","floor":27},{"w":"clause","m":"條款","p":"noun","floor":27},{"w":"stipulation","m":"規定；約定條件","p":"noun","floor":27},{"w":"enforcement","m":"執行；強制實施","p":"noun","floor":27},{"w":"regulator","m":"監管機關","p":"noun","floor":27},{"w":"settlement","m":"和解；結算","p":"noun","floor":27}],"28":[{"w":"logistics","m":"物流","p":"noun","floor":28},{"w":"throughput","m":"產出量；吞吐量","p":"noun","floor":28},{"w":"bottleneck","m":"瓶頸","p":"noun","floor":28},{"w":"utilization","m":"利用率","p":"noun","floor":28},{"w":"downtime","m":"停機時間","p":"noun","floor":28},{"w":"lead-time","m":"前置時間；交期","p":"noun","floor":28},{"w":"traceability","m":"可追溯性","p":"noun","floor":28},{"w":"calibration","m":"校正","p":"noun","floor":28},{"w":"variance","m":"變異；差異","p":"noun","floor":28},{"w":"qualification","m":"資格認定；驗證","p":"noun","floor":28},{"w":"certification","m":"認證","p":"noun","floor":28},{"w":"contamination","m":"污染","p":"noun","floor":28},{"w":"tolerance","m":"允許誤差；公差","p":"noun","floor":28},{"w":"dependability","m":"可靠度","p":"noun","floor":28},{"w":"robustness","m":"穩健性","p":"noun","floor":28},{"w":"scalability","m":"可擴充性","p":"noun","floor":28},{"w":"interoperability","m":"互通性","p":"noun","floor":28},{"w":"maintainability","m":"可維護性","p":"noun","floor":28},{"w":"manufacturability","m":"可製造性","p":"noun","floor":28},{"w":"reproducibility","m":"再現性","p":"noun","floor":28},{"w":"optimization","m":"最佳化","p":"noun","floor":28}],"29":[{"w":"hypothesis","m":"假設","p":"noun","floor":29},{"w":"methodology","m":"方法論","p":"noun","floor":29},{"w":"correlation","m":"相關性","p":"noun","floor":29},{"w":"causation","m":"因果關係","p":"noun","floor":29},{"w":"variable","m":"變數","p":"noun","floor":29},{"w":"parameter","m":"參數","p":"noun","floor":29},{"w":"dataset","m":"資料集","p":"noun","floor":29},{"w":"algorithm","m":"演算法","p":"noun","floor":29},{"w":"model","m":"模型","p":"noun","floor":29},{"w":"simulation","m":"模擬","p":"noun","floor":29},{"w":"prediction","m":"預測","p":"noun","floor":29},{"w":"inference","m":"推論","p":"noun","floor":29},{"w":"probability","m":"機率","p":"noun","floor":29},{"w":"sampling","m":"抽樣","p":"noun","floor":29},{"w":"regression","m":"迴歸分析","p":"noun","floor":29},{"w":"clustering","m":"分群","p":"noun","floor":29},{"w":"accuracy","m":"準確度","p":"noun","floor":29},{"w":"precision","m":"精密度","p":"noun","floor":29},{"w":"sensitivity","m":"靈敏度","p":"noun","floor":29},{"w":"specificity","m":"特異度；專一性","p":"noun","floor":29},{"w":"uncertainty","m":"不確定性","p":"noun","floor":29}],"30":[{"w":"exemplary","m":"典範的；可作榜樣的","p":"adjective","floor":30},{"w":"unequivocal","m":"明確無疑的","p":"adjective","floor":30},{"w":"indispensable","m":"不可或缺的","p":"adjective","floor":30},{"w":"pervasive","m":"普遍存在的；滲透廣泛的","p":"adjective","floor":30},{"w":"plausible","m":"看似合理的；可信的","p":"adjective","floor":30},{"w":"rigorous","m":"嚴謹的；嚴格的","p":"adjective","floor":30},{"w":"coherent","m":"連貫的；一致的","p":"adjective","floor":30},{"w":"robust","m":"強健的；穩健的","p":"adjective","floor":30},{"w":"salient","m":"顯著的；重要的","p":"adjective","floor":30},{"w":"prudent","m":"審慎的","p":"adjective","floor":30},{"w":"arbitrary","m":"任意的；武斷的","p":"adjective","floor":30},{"w":"intrinsic","m":"內在的；固有的","p":"adjective","floor":30},{"w":"extrinsic","m":"外在的；非本質的","p":"adjective","floor":30},{"w":"reciprocal","m":"互惠的；相互的","p":"adjective","floor":30},{"w":"cumulative","m":"累積的","p":"adjective","floor":30},{"w":"marginal","m":"邊際的；微小的","p":"adjective","floor":30},{"w":"empirical","m":"實證的；經驗性的","p":"adjective","floor":30},{"w":"normative","m":"規範性的","p":"adjective","floor":30},{"w":"autonomous","m":"自主的；自治的","p":"adjective","floor":30},{"w":"systemic","m":"系統性的；整體性的","p":"adjective","floor":30},{"w":"paradigm","m":"典範；範式","p":"noun","floor":30}]};
+let floorVocab = fallbackFloorVocab;
+let vocab = Object.values(floorVocab).flat();
+let bankMode = "loading";
+let bankCount = vocab.length;
+const LARGE_BANK_CACHE_KEY = "wordspire7000BankV3";
+const LARGE_BANK_CACHE_VERSION = 3;
+const LARGE_BANK_TARGET = 7000;
+
+const LARGE_BANK_LEVEL_FILES = [
+  "high_gov_level1.txt","high_gov_level2.txt","high_gov_level3.txt",
+  "high_gov_level4.txt","high_gov_level5.txt","high_gov_level6.txt"
+];
+const LARGE_BANK_EXTRA_FILES = ["high6000_7000.txt","college2.txt","challenge3000_tw.txt"];
+const RAW_BASE = "https://raw.githubusercontent.com/greenhill33/rootmemo/master/";
+const CDN_BASE = "https://cdn.jsdelivr.net/gh/greenhill33/rootmemo@master/";
+
+const weapons = [
+  {id:"wood",name:"木劍",atk:0,price:0,req:1},
+  {id:"iron",name:"鐵劍",atk:8,price:120,req:3},
+  {id:"silver",name:"銀刃",atk:18,price:320,req:7},
+  {id:"knight",name:"騎士長劍",atk:32,price:650,req:12},
+  {id:"rune",name:"符文大劍",atk:50,price:1100,req:18},
+  {id:"dragon",name:"龍牙聖劍",atk:75,price:1800,req:24}
+];
+
+const armors = [
+  {id:"cloth",name:"旅人布衣",hp:0,price:0,req:1},
+  {id:"leather",name:"皮甲",hp:35,price:110,req:3},
+  {id:"chain",name:"鎖子甲",hp:75,price:300,req:7},
+  {id:"plate",name:"騎士板甲",hp:130,price:620,req:12},
+  {id:"runeArmor",name:"符文重甲",hp:200,price:1050,req:18},
+  {id:"dragonArmor",name:"龍鱗聖甲",hp:300,price:1750,req:24}
+];
+
+const monsterSets = [
+  ["🟢","史萊姆"],["🦇","洞窟蝙蝠"],["🐺","灰牙狼"],["🧌","山丘哥布林"],
+  ["🦂","毒尾蠍"],["👻","幽影"],["🐗","鋼牙野豬"],["🧙","墮落術士"],
+  ["🦎","蜥蜴戰士"],["🕷️","深淵巨蛛"],["🗿","石像守衛"],["💀","骷髏騎士"],
+  ["🐲","幼龍"],["🧛","夜之伯爵"],["👹","赤鬼武者"],["🦅","風暴獅鷲"],
+  ["🐉","古龍"],["🔥","炎魔"],["🦹","黑甲將軍"],["👁️","虛空之眼"],
+  ["🦂","深淵蠍王"],["🌪️","風暴魔靈"],["🦖","太古巨獸"],["🧟","不死領主"],
+  ["⚡","雷霆巨靈"],["🌋","熔火泰坦"],["☠️","冥界騎士"],["🌌","星界吞噬者"],
+  ["🐉","蒼穹龍王"],["👑","魔王・Lexicon"]
+];
+
+const skinColors = ["#f5d2b7","#e8b892","#c98d65","#8c5b3d"];
+const hairColors = ["#2a211e","#694234","#b78342","#d9d9d9","#5a395d"];
+const eyeColors = ["#4c3428","#355b8a","#447a51","#70528e"];
+
+const defaultState = {
+  name:"Daniel",gender:"male",hairStyle:"short",skin:"#e8b892",hair:"#2a211e",eyes:"#355b8a",
+  floor:1,highest:1,coins:0,hp:100,weapon:"wood",armor:"cloth",
+  total:0,correct:0,combo:0,wrongBook:{},monster:null,question:null,recentWords:[],recentByFloor:{},saveVersion:3
+};
+
+let state = loadState();
+let answerLocked = false;
+
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+function loadState(){
+  try{
+    const raw = localStorage.getItem("wordspireSaveV1");
+    if(!raw) return clone(defaultState);
+    const saved = JSON.parse(raw);
+    const merged={...clone(defaultState),...saved,wrongBook:saved.wrongBook||{},recentWords:saved.recentWords||[]};
+    if(saved.saveVersion!==2){
+      merged.question=null;
+      merged.monster=null;
+      merged.recentWords=[];
+      merged.saveVersion=2;
+    }
+    return merged;
+  }catch(e){ return clone(defaultState); }
+}
+function saveState(){ localStorage.setItem("wordspireSaveV1",JSON.stringify(state)); }
+
+function floorScore(floor){
+  const min=250,max=990;
+  return Math.round((min+(floor-1)*(max-min)/29)/5)*5;
+}
+function weapon(){ return weapons.find(x=>x.id===state.weapon)||weapons[0]; }
+function armor(){ return armors.find(x=>x.id===state.armor)||armors[0]; }
+function maxHp(){ return 100+armor().hp; }
+function attackPower(){ return 15+weapon().atk; }
+function rankName(){
+  if(state.highest>=30) return "單字塔征服者";
+  if(state.highest>=25) return "傳說級語彙騎士";
+  if(state.highest>=18) return "高階語彙騎士";
+  if(state.highest>=12) return "資深冒險者";
+  if(state.highest>=6) return "進階冒險者";
+  return "見習冒險者";
+}
+
+function svgAvatar(s, full=true){
+  const female = s.gender==="female";
+  const longHair = s.hairStyle==="long";
+  const armorColor = female ? "#8a5ac1" : "#3f6fa9";
+  const facePath = female
+    ? "M51 57 Q53 37 80 35 Q107 37 109 58 L107 84 Q103 106 80 112 Q57 106 53 84Z"
+    : "M48 58 Q50 36 80 34 Q111 36 113 59 L109 88 L96 108 Q80 116 64 108 L51 88Z";
+  let hair="";
+  if(s.hairStyle==="short"){
+    hair=female
+      ? `<path d="M47 61 Q48 27 80 27 Q113 28 115 64 Q102 48 84 47 Q62 46 47 61Z" fill="${s.hair}" stroke="#263142" stroke-width="1.3"/>`
+      : `<path d="M46 59 Q48 27 80 27 Q113 29 115 59 Q100 43 81 43 Q61 43 46 59Z" fill="${s.hair}" stroke="#263142" stroke-width="1.3"/>`;
+  }else if(s.hairStyle==="side"){
+    hair=female
+      ? `<path d="M45 61 Q47 27 82 26 Q116 30 116 64 Q98 45 61 49 Q54 55 45 61Z" fill="${s.hair}" stroke="#263142" stroke-width="1.3"/><path d="M82 29 Q67 47 50 57" stroke="${s.hair}" stroke-width="11" stroke-linecap="round"/>`
+      : `<path d="M45 59 Q48 27 82 27 Q116 31 115 61 Q96 43 61 48 Q54 54 45 59Z" fill="${s.hair}" stroke="#263142" stroke-width="1.3"/><path d="M80 30 Q66 45 51 54" stroke="${s.hair}" stroke-width="10" stroke-linecap="round"/>`;
+  }else if(s.hairStyle==="spike"){
+    hair=female
+      ? `<path d="M46 61 L50 36 L61 42 L68 25 L80 39 L91 24 L98 42 L112 32 L115 62 Q98 45 80 45 Q61 45 46 61Z" fill="${s.hair}" stroke="#263142" stroke-width="1.3"/>`
+      : `<path d="M45 58 L49 34 L59 41 L66 22 L78 38 L90 20 L97 39 L111 28 L115 58 Q97 42 80 42 Q60 42 45 58Z" fill="${s.hair}" stroke="#263142" stroke-width="1.3"/>`;
+  }else{
+    hair=female
+      ? `<path d="M42 61 Q44 25 80 24 Q118 27 119 66 L122 119 Q105 110 101 86 L58 86 Q54 109 38 119Z" fill="${s.hair}" stroke="#263142" stroke-width="1.3"/>`
+      : `<path d="M44 61 Q46 27 80 25 Q116 29 117 65 L119 109 Q104 101 102 82 L57 82 Q55 101 42 109Z" fill="${s.hair}" stroke="#263142" stroke-width="1.3"/>`;
+  }
+  const eyes = female
+    ? `<ellipse cx="67" cy="72" rx="4.7" ry="5.7" fill="${s.eyes}"/><ellipse cx="94" cy="72" rx="4.7" ry="5.7" fill="${s.eyes}"/><path d="M61 65 Q67 61 73 65 M88 65 Q94 61 100 65" stroke="#513c36" stroke-width="2" fill="none"/><path d="M61 68 L58 66 M100 68 L103 66" stroke="#513c36" stroke-width="1.7"/>`
+    : `<ellipse cx="67" cy="73" rx="4.2" ry="4.5" fill="${s.eyes}"/><ellipse cx="94" cy="73" rx="4.2" ry="4.5" fill="${s.eyes}"/><path d="M60 65 Q67 62 74 64 M87 64 Q94 62 101 65" stroke="#3d302c" stroke-width="3" fill="none"/>`;
+  const nose = female
+    ? `<path d="M80 75 Q77 84 81 86" stroke="rgba(104,65,55,.5)" stroke-width="1.4" fill="none" stroke-linecap="round"/>`
+    : `<path d="M80 74 L77 85 L82 87" stroke="rgba(91,58,50,.55)" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+  const mouth = female
+    ? `<path d="M70 94 Q80 101 91 93 Q80 105 70 94Z" fill="#b86672" opacity=".9"/><ellipse cx="61" cy="86" rx="7" ry="3" fill="#e9a1a4" opacity=".25"/><ellipse cx="99" cy="86" rx="7" ry="3" fill="#e9a1a4" opacity=".25"/>`
+    : `<path d="M70 95 Q80 100 91 94" fill="none" stroke="#865149" stroke-width="2.6" stroke-linecap="round"/>`;
+  return `
+    ${longHair?`<ellipse cx="80" cy="88" rx="42" ry="52" fill="${s.hair}" stroke="#263142" stroke-width="1.2"/>`:""}
+    <path d="${facePath}" fill="${s.skin}" stroke="#6f7682" stroke-width="1.6"/>
+    ${hair}${eyes}${nose}${mouth}
+    ${full?`
+      <path d="M55 108 Q80 118 105 108 L124 144 H36Z" fill="${armorColor}" stroke="#23324a" stroke-width="3"/>
+      <path d="M67 113 L80 129 L94 113" fill="#d5e3f8" opacity=".9"/>
+      <path d="M80 129 L75 145 H86Z" fill="#d7b45a"/>
+      <rect x="32" y="130" width="20" height="8" rx="4" fill="#9b774e" transform="rotate(-22 42 134)"/>
+      <path d="M42 131 L22 107" stroke="#dfe6ed" stroke-width="5" stroke-linecap="round"/>
+      <path d="M22 107 L17 96" stroke="#dfe6ed" stroke-width="8" stroke-linecap="round"/>
+    `:""}
+  `;
+}
+
+function renderAvatar(){
+  ["avatarSvg","battleAvatar","creatorAvatar"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=svgAvatar(state,true);
+  });
+}
+
+
+function normalizePos(rest){
+  const x=(rest||"").toLowerCase();
+  if(/(^|;)\s*(vt|vi|v)\./.test(x)) return "verb";
+  if(/(^|;)\s*(adj|a)\./.test(x)) return "adjective";
+  if(/(^|;)\s*adv\./.test(x)) return "adverb";
+  if(/(^|;)\s*n\./.test(x)) return "noun";
+  if(/(^|;)\s*prep\./.test(x)) return "preposition";
+  if(/(^|;)\s*conj\./.test(x)) return "conjunction";
+  if(/(^|;)\s*pron\./.test(x)) return "pronoun";
+  return "word";
+}
+function cleanMeaning(rest){
+  let x=(rest||"").replace(/\s+/g," ").trim();
+  x=x.replace(/(^|;)\s*(vt|vi|v|adj|adv|n|prep|conj|pron|art|a)\.\s*/gi,"$1");
+  x=x.replace(/;+/g,"；").replace(/,+/g,"、");
+  x=x.replace(/\s*；\s*/g,"；").replace(/\s*、\s*/g,"、");
+  const chunks=x.split("；").filter(Boolean).slice(0,3);
+  x=chunks.join("；").replace(/^[-–—\s]+|[-–—\s]+$/g,"");
+  return x || "（請依上下文判斷詞義）";
+}
+function parseRootMemo(text,level,sourceName){
+  const result=[];
+  const seen=new Set();
+  for(const raw of text.split(/\r?\n/)){
+    const line=raw.trim();
+    if(!line || line.startsWith("#") || line.startsWith("%") || !line.includes("=")) continue;
+    const idx=line.indexOf("=");
+    let word=line.slice(0,idx).trim().replace(/^\*+/,"").toLowerCase();
+    const rest=line.slice(idx+1).trim();
+    if(!/^[a-z][a-z'-]{1,24}$/.test(word) || seen.has(word) || !rest) continue;
+    seen.add(word);
+    result.push({w:word,m:cleanMeaning(rest),p:normalizePos(rest),level,source:sourceName});
+  }
+  return result;
+}
+function stableHash(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); }
+  return h>>>0;
+}
+function buildFloors(items){
+  const result={}; for(let f=1;f<=30;f++) result[f]=[];
+  for(const item of items){
+    const lv=Math.max(1,Math.min(6,item.level||6));
+    const floor=(lv-1)*5 + (stableHash(item.w)%5) + 1;
+    result[floor].push({...item,floor});
+  }
+  // deterministic order inside each floor; question selection still random.
+  for(let f=1;f<=30;f++) result[f].sort((a,b)=>a.w.localeCompare(b.w));
+  return result;
+}
+async function fetchBankText(file){
+  const urls=[RAW_BASE+encodeURIComponent(file),CDN_BASE+encodeURIComponent(file)];
+  let lastErr=null;
+  for(const url of urls){
+    try{
+      const r=await fetch(url,{cache:"no-cache"});
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      return await r.text();
+    }catch(e){ lastErr=e; }
+  }
+  throw lastErr || new Error("題庫下載失敗");
+}
+function setBankStatus(mode,count,message){
+  bankMode=mode;bankCount=count||0;
+  const el=document.getElementById("bankStatus");
+  const note=document.getElementById("bankNotice");
+  if(!el)return;
+  el.classList.remove("ready","fallback");
+  if(mode==="ready"){
+    el.classList.add("ready");el.textContent=`題庫：${count.toLocaleString()} 字 ✓`;
+    if(note) note.innerHTML=`大型題庫已載入：<b>${count.toLocaleString()} 個不重複單字</b>，依六個學習級別分配至 30 樓；每層題池彼此獨立，單層最近最多 100 題不重複。題庫已快取於瀏覽器，之後可離線沿用。`;
+  }else if(mode==="fallback"){
+    el.classList.add("fallback");el.textContent=`題庫：備援 ${count} 字`;
+    if(note) note.innerHTML=`大型題庫目前無法載入，暫時使用內建 <b>${count} 字</b>備援題庫。保持網路連線後按「更新題庫」即可重新載入約 7000 字。`;
+  }else{
+    el.textContent="題庫：載入中…";
+    if(note && message) note.textContent=message;
+  }
+}
+function applyLargeBank(items,fromCache=false){
+  const unique=[]; const seen=new Set();
+  for(const x of items){
+    if(!x || !x.w || !x.m || seen.has(x.w)) continue;
+    seen.add(x.w); unique.push(x);
+    if(unique.length>=LARGE_BANK_TARGET) break;
+  }
+  if(unique.length<6800) throw new Error(`有效單字不足：${unique.length}`);
+  floorVocab=buildFloors(unique);
+  vocab=unique;
+  bankCount=unique.length;
+  setBankStatus("ready",unique.length);
+  // Switch current question to the large pool without changing battle HP.
+  state.question=null;
+  state.recentWords=[];
+  state.recentByFloor=state.recentByFloor||{};
+  nextQuestion();
+  renderAll();
+  document.getElementById("battleLog").textContent=fromCache?"7000 字級題庫已由本機快取載入。":"7000 字級題庫已載入並快取完成。";
+}
+async function loadLargeVocabulary(force=false){
+  setBankStatus("loading",0,"正在載入 7000 字級分層題庫…首次開啟需要網路，載入後會快取於瀏覽器。");
+  if(!force){
+    try{
+      const raw=localStorage.getItem(LARGE_BANK_CACHE_KEY);
+      if(raw){
+        const cache=JSON.parse(raw);
+        if(cache.version===LARGE_BANK_CACHE_VERSION && Array.isArray(cache.items) && cache.items.length>=6800){
+          applyLargeBank(cache.items,true);return;
+        }
+      }
+    }catch(e){ console.warn("題庫快取讀取失敗",e); }
+  }
+  try{
+    const levelTexts=await Promise.all(LARGE_BANK_LEVEL_FILES.map(fetchBankText));
+    const primary=[];
+    levelTexts.forEach((txt,i)=>primary.push(...parseRootMemo(txt,i+1,LARGE_BANK_LEVEL_FILES[i])));
+    const byWord=new Map();
+    for(const x of primary){ if(!byWord.has(x.w)) byWord.set(x.w,x); }
+
+    // Old Taiwan six-level list is about 6.5K entries. Add unique advanced/common entries until exactly 7000.
+    for(const file of LARGE_BANK_EXTRA_FILES){
+      if(byWord.size>=LARGE_BANK_TARGET) break;
+      const txt=await fetchBankText(file);
+      const extra=parseRootMemo(txt,6,file);
+      for(const x of extra){
+        if(!byWord.has(x.w)) byWord.set(x.w,x);
+        if(byWord.size>=LARGE_BANK_TARGET) break;
+      }
+    }
+    const items=[...byWord.values()].slice(0,LARGE_BANK_TARGET);
+    if(items.length<LARGE_BANK_TARGET) throw new Error(`僅取得 ${items.length} 個不重複單字`);
+    try{
+      const compact=items.map(({w,m,p,level})=>({w,m,p,level}));
+      localStorage.setItem(LARGE_BANK_CACHE_KEY,JSON.stringify({version:LARGE_BANK_CACHE_VERSION,items:compact}));
+    }catch(e){ console.warn("題庫快取寫入失敗",e); }
+    applyLargeBank(items,false);
+  }catch(e){
+    console.warn("大型題庫載入失敗",e);
+    floorVocab=fallbackFloorVocab;vocab=Object.values(floorVocab).flat();
+    setBankStatus("fallback",vocab.length);
+    if(!state.question) nextQuestion();
+    renderAll();
+  }
+}
+function genericExampleFor(item){
+  const w=item.w, m=item.m;
+  if(item.p==="noun") return [`The article discusses ${w} in a clear and practical way.`,`這篇文章以清楚且實用的方式討論「${m}」。`];
+  if(item.p==="adjective") return [`The writer describes the situation as ${w}.`,`作者將這個情況描述為「${m}」。`];
+  if(item.p==="adverb") return [`The speaker used the word “${w}” to describe how the action happened.`,`說話者用「${w}」來描述動作發生的方式，意思接近「${m}」。`];
+  if(item.p==="verb") return [`In this sentence, “${w}” describes an action or change.`,`在這個句型中，「${w}」表示「${m}」這個動作或變化。`];
+  if(item.p==="preposition") return [`The meaning of “${w}” depends on its relationship to the other words in the sentence.`,`「${w}」在句中用來表達與其他詞語的關係，常見意思為「${m}」。`];
+  return [`The word “${w}” is used here with the meaning “${m}”.`,`此處「${w}」的意思是「${m}」。`];
+}
+
+function makeMonster(){
+  const f=state.floor;
+  const base=36 + f*12 + Math.floor(Math.pow(f,1.35)*2.2);
+  const idx=Math.min(monsterSets.length-1,f-1);
+  const [icon,name]=monsterSets[idx];
+  state.monster={
+    floor:f,name:`${name} Lv.${f}`,icon,
+    maxHp:base,hp:base,
+    atk:Math.round(7+f*1.65),
+    reward:Math.round(18+f*8+Math.pow(f,1.23)*2)
+  };
+  state.combo=0;
+  nextQuestion();
+  saveState();
+}
+
+function ensureMonster(){
+  if(!state.monster || state.monster.floor!==state.floor || state.monster.hp<=0) makeMonster();
+}
+
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function exampleFor(item){
+  const w=item.w;
+  const special={
+    arrive:["The guests will arrive before noon.","來賓將在中午前抵達。"],
+    leave:["The train will leave at 8:30.","火車將在 8:30 出發。"],
+    wait:["Please wait in the lobby for a few minutes.","請在大廳等候幾分鐘。"],
+    travel:["She often travels overseas for business.","她經常出國出差。"],
+    resign:["He decided to resign from his position.","他決定辭去目前的職位。"],
+    comply:["All suppliers must comply with the new safety rules.","所有供應商都必須遵守新的安全規定。"],
+    fluctuate:["Raw-material prices may fluctuate during the year.","原物料價格在一年中可能會波動。"],
+    deteriorate:["Product quality may deteriorate during improper storage.","產品品質可能因不當儲存而劣化。"],
+    collaborate:["The two departments will collaborate on the new project.","兩個部門將合作進行新專案。"],
+    specialize:["This supplier specializes in precision equipment.","這家供應商專精於精密設備。"],
+    withdraw:["The company decided to withdraw the proposal.","公司決定撤回該提案。"],
+    proliferate:["Small errors can proliferate if the process is not controlled.","若製程未受控，小錯誤可能會迅速擴散。"],
+    expedite:["We need to expedite the approval process.","我們需要加速核准流程。"],
+    alleviate:["The new procedure should alleviate the workload.","新程序應可減輕工作負擔。"],
+    underpin:["Reliable data underpin sound business decisions.","可靠數據是良好商業決策的基礎。"],
+    disseminate:["The team will disseminate the updated guidelines today.","團隊今天會發布更新後的指引。"],
+    capitalize:["The company hopes to capitalize on growing demand.","公司希望善用日益增加的需求。"],
+    "lead-time":["The supplier reduced the lead-time by three days.","供應商將前置時間縮短了三天。"]
+  };
+  if(special[w]) return special[w];
+  const verbObjects={
+    send:["the file","檔案"],receive:["the package","包裹"],buy:["two new laptops","兩台新筆電"],sell:["the old equipment","舊設備"],
+    pay:["the invoice","發票"],call:["the customer","客戶"],help:["the new employee","新進員工"],open:["the document","文件"],close:["the office","辦公室"],
+    start:["the meeting","會議"],finish:["the report","報告"],visit:["the client","客戶"],check:["the schedule","行程"],sign:["the contract","合約"],move:["the boxes","箱子"],choose:["the best option","最佳選項"],bring:["your identification","身分證明"],
+    reserve:["a meeting room","會議室"],attend:["the seminar","研討會"],explain:["the procedure","程序"],prepare:["the presentation","簡報"],return:["the equipment","設備"],borrow:["a laptop","筆電"],replace:["the damaged part","損壞零件"],contact:["the supplier","供應商"],invite:["the client","客戶"],deliver:["the package","包裹"],arrange:["the meeting","會議"],accept:["the offer","提議"],request:["more information","更多資訊"],answer:["the question","問題"],follow:["the guideline","指引"],enter:["the data","資料"],complete:["the form","表單"],
+    reimburse:["the travel expense","差旅費"],designate:["a project leader","專案負責人"],authorize:["the payment","付款"],delegate:["the task","任務"]
+  };
+  if(item.p==="noun") return [`The team discussed the ${w} during the morning meeting.`,`團隊在早會中討論了這項「${item.m}」。`];
+  if(item.p==="adjective") return [`The manager said the new plan was ${w}.`,`主管表示這項新計畫相當「${item.m}」。`];
+  if(item.p==="adverb"){
+    if(w==="approximately") return ["Approximately 200 people attended the event.","大約有 200 人參加這場活動。"];
+    if(w==="otherwise") return ["Please reply today; otherwise, the order will be delayed.","請今天回覆，否則訂單將會延誤。"];
+    if(w==="increasingly") return ["Customers are increasingly using online services.","顧客正越來越常使用線上服務。"];
+    return [`The team handled the request ${w}.`,`團隊以「${item.m}」的方式處理這項要求。`];
+  }
+  if(verbObjects[w]){ const [obj,objZh]=verbObjects[w]; return [`Please ${w} ${obj} as soon as possible.`,`請盡快「${item.m}」${objZh}。`]; }
+  if(item.source) return genericExampleFor(item);
+  return [`Please ${w} this as soon as possible.`,`請盡快完成「${item.m}」這件事。`];
+}
+function nextQuestion(){
+  const pool=floorVocab[state.floor] || fallbackFloorVocab[state.floor] || fallbackFloorVocab[1];
+  state.recentByFloor=state.recentByFloor||{};
+  const key=String(state.floor);
+  const recent=Array.isArray(state.recentByFloor[key])?state.recentByFloor[key]:[];
+  const cooldown=Math.min(100,Math.max(20,pool.length-1));
+  let candidates=pool.filter(v=>!recent.includes(v.w));
+  if(!candidates.length){
+    state.recentByFloor[key]=recent.slice(-Math.max(0,cooldown-1));
+    candidates=pool.filter(v=>!state.recentByFloor[key].includes(v.w));
+  }
+  const q=pick(candidates.length?candidates:pool);
+  const distractorPool=pool.filter(v=>v.w!==q.w && v.m!==q.m);
+  const distractors=shuffle(distractorPool).slice(0,3);
+  // Safety fallback only if a floor somehow has fewer than four usable entries.
+  if(distractors.length<3){
+    const adjacent=[];
+    for(const f of [state.floor-1,state.floor+1]) if(floorVocab[f]) adjacent.push(...floorVocab[f]);
+    for(const x of shuffle(adjacent)){
+      if(x.w!==q.w && x.m!==q.m && !distractors.some(d=>d.w===x.w)) distractors.push(x);
+      if(distractors.length===3)break;
+    }
+  }
+  state.question={...q,options:shuffle([{m:q.m,w:q.w,correct:true},...distractors.slice(0,3).map(v=>({m:v.m,w:v.w,correct:false}))])};
+  state.recentByFloor[key]=[...recent,q.w].slice(-cooldown);
+  state.recentWords=[...(state.recentWords||[]),q.w].slice(-100);
+  answerLocked=false;
+  saveState();
+}
+
+function renderAll(){
+  if(state.hp>maxHp()) state.hp=maxHp();
+  renderAvatar();
+  document.getElementById("heroName").textContent=`勇者 ${state.name}`;
+  document.getElementById("playerBattleName").textContent=state.name;
+  document.getElementById("heroRank").textContent=rankName();
+  document.getElementById("hpText").textContent=`${Math.max(0,state.hp)} / ${maxHp()}`;
+  document.getElementById("hpFill").style.width=`${Math.max(0,state.hp)/maxHp()*100}%`;
+  document.getElementById("attackStat").textContent=attackPower();
+  document.getElementById("coinStat").textContent=state.coins;
+  document.getElementById("highestStat").textContent=`${state.highest}F`;
+  document.getElementById("accuracyStat").textContent=state.total?`${Math.round(state.correct/state.total*100)}%`:"—";
+  document.getElementById("weaponText").textContent=weapon().name;
+  document.getElementById("armorText").textContent=armor().name;
+  document.getElementById("floorBadge").textContent=`第 ${state.floor} 階`;
+  document.getElementById("scoreBadge").textContent=`TOEIC 約 ${floorScore(state.floor)}`;
+  document.getElementById("difficultyText").textContent=`第 ${state.floor} 階｜${floorBandLabel(state.floor)}`;
+  document.getElementById("comboText").textContent=state.combo;
+  const poolSize=(floorVocab[state.floor]||[]).length;
+  const fps=document.getElementById("floorPoolSize"); if(fps) fps.textContent=poolSize||"—";
+
+  if(state.monster){
+    document.getElementById("monsterName").textContent=state.monster.name;
+    document.getElementById("monsterFigure").textContent=state.monster.icon;
+    document.getElementById("monsterHpText").textContent=`${Math.max(0,state.monster.hp)} / ${state.monster.maxHp}`;
+    document.getElementById("monsterHpFill").style.width=`${Math.max(0,state.monster.hp)/state.monster.maxHp*100}%`;
+  }
+  renderQuestion();
+  renderTower();
+  renderShop();
+  renderWrongBook();
+  saveState();
+}
+function floorBandLabel(f){ if(f<=5)return "基礎"; if(f<=10)return "初級商務"; if(f<=15)return "中級商務"; if(f<=20)return "中高級"; if(f<=25)return "高階"; return "菁英"; }
+function renderQuestion(){
+  const q=state.question;
+  if(!q)return;
+  document.getElementById("wordText").textContent=q.w;
+  document.getElementById("wordPos").textContent=q.p;
+  const wrap=document.getElementById("answers");
+  wrap.innerHTML="";
+  q.options.forEach((opt,i)=>{
+    const b=document.createElement("button");
+    b.className="answer";
+    b.dataset.word=opt.w;
+    b.dataset.meaning=opt.m;
+    b.innerHTML=`<b>${i+1}.</b> ${opt.m}`;
+    b.onclick=()=>answer(opt,b);
+    wrap.appendChild(b);
+  });
+}
+function renderTower(){
+  const wrap=document.getElementById("tower");
+  wrap.innerHTML="";
+  for(let f=1;f<=30;f++){
+    const row=document.createElement("div");
+    row.className="floor-row"+(f===state.floor?" current":"")+(f>state.highest?" locked":"");
+    row.innerHTML=`<span class="fnum">${f}F ${f===30?"👑":""}</span><span>TOEIC 約 ${floorScore(f)}</span>`;
+    wrap.appendChild(row);
+  }
+  setTimeout(()=>{
+    const cur=wrap.querySelector(".current");
+    if(cur) cur.scrollIntoView({block:"center",behavior:"smooth"});
+  },0);
+}
+function renderShop(){
+  const wrap=document.getElementById("shopList");
+  wrap.innerHTML="";
+  const all=[
+    ...weapons.slice(1).map(x=>({...x,type:"weapon"})),
+    ...armors.slice(1).map(x=>({...x,type:"armor"}))
+  ];
+  all.forEach(item=>{
+    const owned=item.type==="weapon"?state.weapon===item.id:state.armor===item.id;
+    const unlocked=state.highest>=item.req;
+    const div=document.createElement("div");
+    div.className="shop-item";
+    const effect=item.type==="weapon"?`攻擊力 +${item.atk}`:`最大 HP +${item.hp}`;
+    div.innerHTML=`
+      <div class="shop-head"><span class="shop-name">${item.type==="weapon"?"🗡️":"🛡️"} ${item.name}</span><span class="shop-price">${item.price} 🪙</span></div>
+      <div class="shop-desc">${effect}｜${item.req}F 解鎖</div>
+    `;
+    const btn=document.createElement("button");
+    btn.className="btn"+(owned?" primary":"");
+    btn.textContent=owned?"已裝備":(!unlocked?"尚未解鎖":state.coins<item.price?"金幣不足":"購買並裝備");
+    btn.disabled=owned||!unlocked||state.coins<item.price;
+    btn.onclick=()=>buyItem(item);
+    div.appendChild(btn);
+    wrap.appendChild(div);
+  });
+}
+function renderWrongBook(){
+  const wrap=document.getElementById("wrongList");
+  const entries=Object.values(state.wrongBook).sort((a,b)=>b.count-a.count);
+  if(!entries.length){
+    wrap.innerHTML='<div class="tiny">目前沒有錯題。答錯的單字會自動收錄在這裡。</div>';
+    return;
+  }
+  wrap.innerHTML=entries.map(x=>`
+    <div class="wrong-item"><strong>${x.w}</strong> <span>(${x.p})</span><br>
+    ${x.m}<br><span>答錯 ${x.count} 次</span></div>`).join("");
+}
+
+function answer(opt,btn){
+  if(answerLocked || !state.monster || state.monster.hp<=0 || state.hp<=0)return;
+  answerLocked=true;
+  state.total++;
+  const q=state.question;
+  const buttons=[...document.querySelectorAll(".answer")];
+  buttons.forEach(b=>b.disabled=true);
+  const correct=!!opt.correct;
+  buttons.forEach(b=>{ if(b.dataset.word===q.w)b.classList.add("correct"); });
+  const [exEn,exZh]=exampleFor(q);
+  const mapping=q.options.map(x=>`<span style="white-space:nowrap"><b>${x.m}</b> → ${x.w}</span>`).join("　｜　");
+
+  if(correct){
+    state.correct++;
+    state.combo++;
+    const comboBonus=state.combo>=3?Math.min(18,(state.combo-2)*3):0;
+    const dmg=attackPower()+comboBonus;
+    state.monster.hp=Math.max(0,state.monster.hp-dmg);
+    btn.classList.add("correct");
+    animateAttack(true);
+    document.getElementById("feedback").innerHTML=`✅ <b>${q.w}</b> = ${q.m}。你造成 <b>${dmg}</b> 點傷害${comboBonus?`（連擊 +${comboBonus}）`:""}！<br><br>📘 <b>例句：</b>${exEn}<br><span style="color:#9fb0ca">${exZh}</span>`;
+    document.getElementById("battleLog").textContent=`${state.name} 發動攻擊！${q.w} 的意思答對了。`;
+    if(state.monster.hp<=0){
+      setTimeout(winBattle,420);
+    }else{
+      setTimeout(()=>{ nextQuestion(); renderAll(); },1600);
+    }
+  }else{
+    state.combo=0;
+    btn.classList.add("wrong");
+    const dmg=state.monster.atk;
+    state.hp=Math.max(0,state.hp-dmg);
+    state.wrongBook[q.w]={w:q.w,m:q.m,p:q.p,count:(state.wrongBook[q.w]?.count||0)+1};
+    animateAttack(false);
+    document.getElementById("feedback").innerHTML=`❌ 正解：<b>${q.w}</b> = <b>${q.m}</b>。怪物反擊，造成 <b>${dmg}</b> 點傷害。<br><br>📘 <b>例句：</b>${exEn}<br><span style="color:#9fb0ca">${exZh}</span><br><br>🔎 <b>本題選項對照：</b><br><span style="line-height:1.9">${mapping}</span>`;
+    document.getElementById("battleLog").textContent=`${state.monster.name} 趁隙反擊！`;
+    if(state.hp<=0){
+      setTimeout(loseBattle,420);
+    }else{
+      setTimeout(()=>{ nextQuestion(); renderAll(); },2800);
+    }
+  }
+  renderStatsOnly();
+  saveState();
+}
+
+function animateAttack(playerWins){
+  const p=document.getElementById("battleAvatar");
+  const m=document.getElementById("monsterFigure");
+  if(playerWins){
+    p.classList.add("attack-player");m.classList.add("hit");
+  }else{
+    m.classList.add("attack-monster");p.classList.add("hit");
+  }
+  setTimeout(()=>{p.classList.remove("attack-player","hit");m.classList.remove("attack-monster","hit");},430);
+}
+function renderStatsOnly(){
+  document.getElementById("hpText").textContent=`${Math.max(0,state.hp)} / ${maxHp()}`;
+  document.getElementById("hpFill").style.width=`${Math.max(0,state.hp)/maxHp()*100}%`;
+  document.getElementById("monsterHpText").textContent=`${Math.max(0,state.monster.hp)} / ${state.monster.maxHp}`;
+  document.getElementById("monsterHpFill").style.width=`${Math.max(0,state.monster.hp)/state.monster.maxHp*100}%`;
+  document.getElementById("comboText").textContent=state.combo;
+  document.getElementById("accuracyStat").textContent=state.total?`${Math.round(state.correct/state.total*100)}%`:"—";
+}
+
+function winBattle(){
+  const reward=state.monster.reward;
+  state.coins+=reward;
+  state.highest=Math.max(state.highest,state.floor);
+  const overlay=document.getElementById("resultOverlay");
+  document.getElementById("resultIcon").textContent=state.floor===30?"👑":"🏆";
+  document.getElementById("resultTitle").textContent=state.floor===30?"你征服了單字塔！":"戰鬥勝利";
+  document.getElementById("resultText").innerHTML=`獲得 <b>${reward} 🪙</b>。本階對應 TOEIC 約 <b>${floorScore(state.floor)}</b>。`;
+  const buttons=document.getElementById("resultButtons");
+  buttons.innerHTML="";
+  if(state.floor<30){
+    const up=document.createElement("button");up.className="btn primary";up.textContent=`挑戰 ${state.floor+1}F`;
+    up.onclick=()=>{state.floor++;state.highest=Math.max(state.highest,state.floor);state.hp=Math.min(maxHp(),state.hp+Math.round(maxHp()*.12));makeMonster();overlay.classList.remove("show");renderAll();};
+    buttons.appendChild(up);
+  }
+  const stay=document.createElement("button");stay.className="btn";stay.textContent=state.floor===30?"再戰塔頂":"留在本階練習";
+  stay.onclick=()=>{state.hp=Math.min(maxHp(),state.hp+Math.round(maxHp()*.08));makeMonster();overlay.classList.remove("show");renderAll();};
+  buttons.appendChild(stay);
+  saveState();renderAll();overlay.classList.add("show");
+}
+
+function loseBattle(){
+  const old=state.floor;
+  state.floor=Math.max(1,state.floor-1);
+  state.hp=maxHp();
+  state.combo=0;
+  const overlay=document.getElementById("resultOverlay");
+  document.getElementById("resultIcon").textContent="💀";
+  document.getElementById("resultTitle").textContent="勇者倒下了";
+  document.getElementById("resultText").innerHTML=old===1
+    ?"你在第 1 階重新整備，生命值已恢復。"
+    :`依規則由 <b>${old}F</b> 降到 <b>${state.floor}F</b>，生命值已恢復。`;
+  const buttons=document.getElementById("resultButtons");
+  buttons.innerHTML="";
+  const retry=document.createElement("button");retry.className="btn primary";retry.textContent=`前往 ${state.floor}F`;
+  retry.onclick=()=>{makeMonster();overlay.classList.remove("show");renderAll();};
+  buttons.appendChild(retry);
+  saveState();renderAll();overlay.classList.add("show");
+}
+
+function buyItem(item){
+  if(state.coins<item.price || state.highest<item.req)return;
+  state.coins-=item.price;
+  if(item.type==="weapon") state.weapon=item.id;
+  else{
+    const oldMax=maxHp();
+    state.armor=item.id;
+    const newMax=maxHp();
+    state.hp=Math.min(newMax,state.hp+(newMax-oldMax));
+  }
+  saveState();renderAll();
+}
+
+function heal(){
+  if(state.coins<30){ document.getElementById("battleLog").textContent="金幣不足，旅店需要 30 🪙。"; return; }
+  if(state.hp>=maxHp()){ document.getElementById("battleLog").textContent="目前已是滿血狀態。"; return; }
+  state.coins-=30;state.hp=maxHp();saveState();renderAll();
+  document.getElementById("battleLog").textContent="在旅店休息後，生命值完全恢復。";
+}
+
+// Character creator
+function setupSwatches(containerId,colors,key){
+  const wrap=document.getElementById(containerId);wrap.innerHTML="";
+  colors.forEach(c=>{
+    const b=document.createElement("button");b.className="swatch"+(state[key]===c?" active":"");b.style.background=c;
+    b.onclick=()=>{
+      state[key]=c;
+      [...wrap.children].forEach(x=>x.classList.remove("active"));b.classList.add("active");
+      renderAvatar();
+    };
+    wrap.appendChild(b);
+  });
+}
+function openCreator(){
+  document.getElementById("nameInput").value=state.name;
+  document.getElementById("genderInput").value=state.gender;
+  document.getElementById("hairStyleInput").value=state.hairStyle;
+  setupSwatches("skinSwatches",skinColors,"skin");
+  setupSwatches("hairSwatches",hairColors,"hair");
+  setupSwatches("eyeSwatches",eyeColors,"eyes");
+  document.getElementById("creatorModal").classList.add("show");
+  renderAvatar();
+}
+function closeCreator(){ document.getElementById("creatorModal").classList.remove("show"); }
+function saveHero(){
+  state.name=(document.getElementById("nameInput").value.trim()||"勇者").slice(0,12);
+  state.gender=document.getElementById("genderInput").value;
+  state.hairStyle=document.getElementById("hairStyleInput").value;
+  saveState();closeCreator();renderAll();
+}
+
+document.getElementById("refreshBankBtn").onclick=()=>{
+  try{localStorage.removeItem(LARGE_BANK_CACHE_KEY);}catch(e){}
+  loadLargeVocabulary(true);
+};
+document.getElementById("editHeroBtn").onclick=openCreator;
+document.getElementById("closeCreatorBtn").onclick=closeCreator;
+document.getElementById("saveHeroBtn").onclick=saveHero;
+document.getElementById("healBtn").onclick=heal;
+document.getElementById("genderInput").onchange=e=>{state.gender=e.target.value;renderAvatar();};
+document.getElementById("hairStyleInput").onchange=e=>{state.hairStyle=e.target.value;renderAvatar();};
+document.getElementById("resetBtn").onclick=()=>{
+  if(confirm("確定要重置所有遊戲進度、金幣、裝備與錯題紀錄嗎？")){
+    state=clone(defaultState);localStorage.removeItem("wordspireSaveV1");makeMonster();renderAll();openCreator();
+  }
+};
+document.getElementById("creatorModal").addEventListener("click",e=>{if(e.target.id==="creatorModal")closeCreator();});
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");document.getElementById("tab-"+t.dataset.tab).classList.add("active");
+  };
+});
+document.addEventListener("keydown",e=>{
+  if(document.getElementById("creatorModal").classList.contains("show"))return;
+  const n=Number(e.key);
+  if(n>=1&&n<=4){
+    const btns=[...document.querySelectorAll(".answer")];
+    if(btns[n-1]&&!btns[n-1].disabled)btns[n-1].click();
+  }
+});
+
+if(state.question && (!Array.isArray(state.question.options) || typeof state.question.options[0]!=="object")){ state.question=null; }
+ensureMonster();
+if(!state.question) nextQuestion();
+renderAll();
+</script>
+</body>
+</html>
