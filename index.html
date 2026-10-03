@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Wordspire Tower V2.1｜英語單字勇者爬塔</title>
+<title>Wordspire Tower V3.2｜7000字英語單字勇者爬塔</title>
 <style>
   :root{
     --bg:#10151f;
@@ -271,8 +271,8 @@
     <div class="brand">
       <div class="logo">⚔️</div>
       <div>
-        <h1>Wordspire Tower V3｜7000字英語單字勇者爬塔</h1>
-        <div class="subtitle">7000 字級大型分層題庫｜答對攻擊、答錯受傷，用單字能力一路攻上塔頂。</div>
+        <h1>Wordspire Tower V3.2｜7000字英語單字勇者爬塔</h1>
+        <div class="subtitle">7000 字級分層題庫｜六級架構＋詞頻校正｜28–30F 僅保留低頻進階挑戰字彙。</div>
       </div>
     </div>
     <div class="top-actions">
@@ -342,7 +342,7 @@
       <div class="quiz">
         <div class="quiz-meta">
           <span>題目難度：<b id="difficultyText">Lv.1</b>｜本層 <b id="floorPoolSize">—</b> 字</span>
-          <span>連續答對：<b class="combo" id="comboText">0</b></span>
+          <span>本戰答對：<b id="battleCorrectText">0 / 5</b>｜連續答對：<b class="combo" id="comboText">0</b></span>
         </div>
         <div class="word-card">
           <div class="word" id="wordText">begin</div>
@@ -384,7 +384,7 @@
 </div>
 
 <div style="max-width:1380px;margin:0 auto 22px;padding:0 18px;color:#7587a2;font-size:10px;line-height:1.6">
-  題庫說明：V3 採大考 7000 字級的六級難度概念，建立 7,000 個不重複詞條的個人學習題庫。大型題庫第一次載入時由公開學習資料取得並快取；若來源暫時無法連線，會自動使用內建備援題庫。現行大考中心參考詞彙表約為 6,000 詞，本遊戲的「7000 字級」為擴充學習題庫，不代表現行官方詞表名稱。
+  題庫說明：V3.2 以六級高中詞彙架構為主體，補充至 7,000 個不重複詞條；同級內再以常用度排序，28–30F 保留額外進階字彙。只有畫面顯示「題庫：7,000 字 ✓」才代表完整題庫已成功載入。多益分數僅為遊戲難度映射，並非正式測驗預測。
 </div>
 
 <div class="modal" id="creatorModal">
@@ -451,8 +451,8 @@ let floorVocab = fallbackFloorVocab;
 let vocab = Object.values(floorVocab).flat();
 let bankMode = "loading";
 let bankCount = vocab.length;
-const LARGE_BANK_CACHE_KEY = "wordspire7000BankV3";
-const LARGE_BANK_CACHE_VERSION = 3;
+const LARGE_BANK_CACHE_KEY = "wordspire7000BankV32";
+const LARGE_BANK_CACHE_VERSION = 4;
 const LARGE_BANK_TARGET = 7000;
 
 const LARGE_BANK_LEVEL_FILES = [
@@ -462,6 +462,17 @@ const LARGE_BANK_LEVEL_FILES = [
 const LARGE_BANK_EXTRA_FILES = ["high6000_7000.txt","college2.txt","challenge3000_tw.txt"];
 const RAW_BASE = "https://raw.githubusercontent.com/greenhill33/rootmemo/master/";
 const CDN_BASE = "https://cdn.jsdelivr.net/gh/greenhill33/rootmemo@master/";
+const FREQUENCY_URLS = [
+  "https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english.txt",
+  "https://cdn.jsdelivr.net/gh/first20hours/google-10000-english@master/google-10000-english.txt"
+];
+const LEVEL_FLOOR_RANGES = {
+  1:[1,4], 2:[5,8], 3:[9,12], 4:[13,16],
+  5:[17,21], 6:[22,27], 7:[28,30]
+};
+const EXCLUDED_WORDS = new Set([
+  "negro","nigger","chink","gook","spic","kike"
+]);
 
 const weapons = [
   {id:"wood",name:"木劍",atk:0,price:0,req:1},
@@ -499,7 +510,7 @@ const eyeColors = ["#4c3428","#355b8a","#447a51","#70528e"];
 const defaultState = {
   name:"Daniel",gender:"male",hairStyle:"short",skin:"#e8b892",hair:"#2a211e",eyes:"#355b8a",
   floor:1,highest:1,coins:0,hp:100,weapon:"wood",armor:"cloth",
-  total:0,correct:0,combo:0,wrongBook:{},monster:null,question:null,recentWords:[],recentByFloor:{},saveVersion:3
+  total:0,correct:0,combo:0,wrongBook:{},monster:null,question:null,recentWords:[],recentByFloor:{},saveVersion:4
 };
 
 let state = loadState();
@@ -511,12 +522,15 @@ function loadState(){
     const raw = localStorage.getItem("wordspireSaveV1");
     if(!raw) return clone(defaultState);
     const saved = JSON.parse(raw);
-    const merged={...clone(defaultState),...saved,wrongBook:saved.wrongBook||{},recentWords:saved.recentWords||[]};
-    if(saved.saveVersion!==2){
+    const merged={...clone(defaultState),...saved,wrongBook:saved.wrongBook||{},recentWords:saved.recentWords||[],recentByFloor:saved.recentByFloor||{}};
+    if(saved.saveVersion!==4){
+      // V3.2 changes the difficulty assignment and battle gate, so old active
+      // questions/monsters are discarded while long-term progress is retained.
       merged.question=null;
       merged.monster=null;
       merged.recentWords=[];
-      merged.saveVersion=2;
+      merged.recentByFloor={};
+      merged.saveVersion=4;
     }
     return merged;
   }catch(e){ return clone(defaultState); }
@@ -637,16 +651,51 @@ function stableHash(str){
   for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); }
   return h>>>0;
 }
-function buildFloors(items){
+function frequencyDifficulty(word,freqRanks){
+  // Google 10K rank: lower rank = more common/easier.
+  // Words outside the 10K list are treated as distinctly rarer.
+  const rank=freqRanks.get(word);
+  const freqPart=rank ? rank : 12000 + (stableHash(word)%3000);
+  const morphology=Math.min(20,word.length)*18;
+  return freqPart*10 + morphology;
+}
+function buildFloors(items,freqRanks=new Map()){
   const result={}; for(let f=1;f<=30;f++) result[f]=[];
-  for(const item of items){
-    const lv=Math.max(1,Math.min(6,item.level||6));
-    const floor=(lv-1)*5 + (stableHash(item.w)%5) + 1;
-    result[floor].push({...item,floor});
+  for(let level=1;level<=7;level++){
+    const [start,end]=LEVEL_FLOOR_RANGES[level];
+    const floors=end-start+1;
+    const group=items
+      .filter(x=>Math.max(1,Math.min(7,x.level||7))===level)
+      .sort((a,b)=>{
+        const da=frequencyDifficulty(a.w,freqRanks);
+        const db=frequencyDifficulty(b.w,freqRanks);
+        return da-db || a.w.localeCompare(b.w);
+      });
+    group.forEach((item,i)=>{
+      // Quantile split within each official/supplemental level:
+      // common words go to the lower floor; rarer words go upward.
+      const offset=Math.min(floors-1,Math.floor(i*floors/Math.max(1,group.length)));
+      const floor=start+offset;
+      result[floor].push({...item,floor});
+    });
   }
-  // deterministic order inside each floor; question selection still random.
   for(let f=1;f<=30;f++) result[f].sort((a,b)=>a.w.localeCompare(b.w));
   return result;
+}
+async function fetchFrequencyRanks(){
+  let lastErr=null;
+  for(const url of FREQUENCY_URLS){
+    try{
+      const r=await fetch(url,{cache:"force-cache"});
+      if(!r.ok) throw new Error(`HTTP ${r.status}`);
+      const words=(await r.text()).split(/\r?\n/).map(x=>x.trim().toLowerCase()).filter(Boolean);
+      const map=new Map();
+      words.forEach((w,i)=>{ if(!map.has(w)) map.set(w,i+1); });
+      return map;
+    }catch(e){ lastErr=e; }
+  }
+  console.warn("常用度資料無法載入，改用字形難度作為次級排序。",lastErr);
+  return new Map();
 }
 async function fetchBankText(file){
   const urls=[RAW_BASE+encodeURIComponent(file),CDN_BASE+encodeURIComponent(file)];
@@ -668,14 +717,22 @@ function setBankStatus(mode,count,message){
   el.classList.remove("ready","fallback");
   if(mode==="ready"){
     el.classList.add("ready");el.textContent=`題庫：${count.toLocaleString()} 字 ✓`;
-    if(note) note.innerHTML=`大型題庫已載入：<b>${count.toLocaleString()} 個不重複單字</b>，依六個學習級別分配至 30 樓；每層題池彼此獨立，單層最近最多 100 題不重複。題庫已快取於瀏覽器，之後可離線沿用。`;
+    if(note) note.innerHTML=`<b>已驗證 ${count.toLocaleString()} 個不重複單字。</b> 六級字表先分級，再以常用度把同級常見字往低樓、低頻字往高樓；28–30F 使用額外進階／挑戰字彙。每層最近最多 100 題不重複。`;
   }else if(mode==="fallback"){
-    el.classList.add("fallback");el.textContent=`題庫：備援 ${count} 字`;
-    if(note) note.innerHTML=`大型題庫目前無法載入，暫時使用內建 <b>${count} 字</b>備援題庫。保持網路連線後按「更新題庫」即可重新載入約 7000 字。`;
+    el.classList.add("fallback");el.textContent=`題庫：備援 ${count} 字 ⚠`;
+    if(note) note.innerHTML=`<b>目前不是 7000 字模式。</b> 大型題庫載入失敗，暫用內建 ${count} 字備援題庫；請保持網路連線後按「更新題庫」。只有上方顯示「題庫：7,000 字 ✓」才代表完整題庫已啟用。`;
   }else{
-    el.textContent="題庫：載入中…";
-    if(note && message) note.textContent=message;
+    el.textContent="題庫：驗證中…";
+    if(note) note.textContent=message||"正在驗證完整題庫，完成前暫停作答。";
   }
+}
+function groupCachedFloors(items){
+  const result={}; for(let f=1;f<=30;f++) result[f]=[];
+  for(const x of items){
+    const f=Number(x.floor);
+    if(f>=1&&f<=30) result[f].push(x);
+  }
+  return result;
 }
 function applyLargeBank(items,fromCache=false){
   const unique=[]; const seen=new Set();
@@ -684,61 +741,85 @@ function applyLargeBank(items,fromCache=false){
     seen.add(x.w); unique.push(x);
     if(unique.length>=LARGE_BANK_TARGET) break;
   }
-  if(unique.length<6800) throw new Error(`有效單字不足：${unique.length}`);
-  floorVocab=buildFloors(unique);
+  if(unique.length!==LARGE_BANK_TARGET) throw new Error(`完整題庫必須為 7000 字，目前為 ${unique.length}`);
+  if(!unique.every(x=>Number(x.floor)>=1&&Number(x.floor)<=30)){
+    throw new Error("題庫缺少新版難度樓層資訊");
+  }
+  floorVocab=groupCachedFloors(unique);
   vocab=unique;
   bankCount=unique.length;
   setBankStatus("ready",unique.length);
-  // Switch current question to the large pool without changing battle HP.
   state.question=null;
   state.recentWords=[];
-  state.recentByFloor=state.recentByFloor||{};
+  state.recentByFloor={};
+  answerLocked=false;
   nextQuestion();
   renderAll();
-  document.getElementById("battleLog").textContent=fromCache?"7000 字級題庫已由本機快取載入。":"7000 字級題庫已載入並快取完成。";
+  document.getElementById("battleLog").textContent=fromCache
+    ?"7,000 字 V3.2 題庫已由本機快取載入。"
+    :"7,000 字 V3.2 題庫已完成難度校正並快取。";
 }
 async function loadLargeVocabulary(force=false){
-  setBankStatus("loading",0,"正在載入 7000 字級分層題庫…首次開啟需要網路，載入後會快取於瀏覽器。");
+  answerLocked=true;
+  setBankStatus("loading",0,"正在載入並驗證 7,000 個單字與難度資料；完成前不開放作答。");
+  renderQuestion();
   if(!force){
     try{
       const raw=localStorage.getItem(LARGE_BANK_CACHE_KEY);
       if(raw){
         const cache=JSON.parse(raw);
-        if(cache.version===LARGE_BANK_CACHE_VERSION && Array.isArray(cache.items) && cache.items.length>=6800){
+        if(cache.version===LARGE_BANK_CACHE_VERSION && Array.isArray(cache.items) && cache.items.length===LARGE_BANK_TARGET){
           applyLargeBank(cache.items,true);return;
         }
       }
     }catch(e){ console.warn("題庫快取讀取失敗",e); }
   }
   try{
-    const levelTexts=await Promise.all(LARGE_BANK_LEVEL_FILES.map(fetchBankText));
+    const [levelTexts,freqRanks]=await Promise.all([
+      Promise.all(LARGE_BANK_LEVEL_FILES.map(fetchBankText)),
+      fetchFrequencyRanks()
+    ]);
     const primary=[];
     levelTexts.forEach((txt,i)=>primary.push(...parseRootMemo(txt,i+1,LARGE_BANK_LEVEL_FILES[i])));
     const byWord=new Map();
     for(const x of primary){ if(!byWord.has(x.w)) byWord.set(x.w,x); }
 
-    // Old Taiwan six-level list is about 6.5K entries. Add unique advanced/common entries until exactly 7000.
-    for(const file of LARGE_BANK_EXTRA_FILES){
-      if(byWord.size>=LARGE_BANK_TARGET) break;
-      const txt=await fetchBankText(file);
-      const extra=parseRootMemo(txt,6,file);
-      for(const x of extra){
-        if(!byWord.has(x.w)) byWord.set(x.w,x);
-        if(byWord.size>=LARGE_BANK_TARGET) break;
+    // Gather ALL supplemental candidates, then choose the genuinely harder/rarer ones.
+    // This avoids filling 28–30F merely by file order.
+    const supplemental=new Map();
+    const extraTexts=await Promise.all(LARGE_BANK_EXTRA_FILES.map(fetchBankText));
+    extraTexts.forEach((txt,i)=>{
+      for(const x of parseRootMemo(txt,7,LARGE_BANK_EXTRA_FILES[i])){
+        if(!byWord.has(x.w) && !supplemental.has(x.w) && !EXCLUDED_WORDS.has(x.w)) supplemental.set(x.w,x);
       }
-    }
-    const items=[...byWord.values()].slice(0,LARGE_BANK_TARGET);
-    if(items.length<LARGE_BANK_TARGET) throw new Error(`僅取得 ${items.length} 個不重複單字`);
+    });
+    const need=LARGE_BANK_TARGET-byWord.size;
+    const hardExtras=[...supplemental.values()]
+      .sort((a,b)=>frequencyDifficulty(b.w,freqRanks)-frequencyDifficulty(a.w,freqRanks) || a.w.localeCompare(b.w))
+      .slice(0,need);
+    for(const x of hardExtras) byWord.set(x.w,x);
+
+    const rawItems=[...byWord.values()];
+    if(rawItems.length!==LARGE_BANK_TARGET) throw new Error(`僅取得 ${rawItems.length} 個不重複單字`);
+
+    const calibratedFloors=buildFloors(rawItems,freqRanks);
+    const items=[];
+    for(let f=1;f<=30;f++) items.push(...calibratedFloors[f]);
+    if(items.length!==LARGE_BANK_TARGET) throw new Error(`分層後題庫數量異常：${items.length}`);
+
     try{
-      const compact=items.map(({w,m,p,level})=>({w,m,p,level}));
+      const compact=items.map(({w,m,p,level,floor})=>({w,m,p,level,floor}));
       localStorage.setItem(LARGE_BANK_CACHE_KEY,JSON.stringify({version:LARGE_BANK_CACHE_VERSION,items:compact}));
     }catch(e){ console.warn("題庫快取寫入失敗",e); }
     applyLargeBank(items,false);
   }catch(e){
     console.warn("大型題庫載入失敗",e);
     floorVocab=fallbackFloorVocab;vocab=Object.values(floorVocab).flat();
+    answerLocked=false;
     setBankStatus("fallback",vocab.length);
-    if(!state.question) nextQuestion();
+    state.question=null;
+    state.recentByFloor={};
+    nextQuestion();
     renderAll();
   }
 }
@@ -752,16 +833,29 @@ function genericExampleFor(item){
   return [`The word “${w}” is used here with the meaning “${m}”.`,`此處「${w}」的意思是「${m}」。`];
 }
 
+function requiredCorrect(f){
+  if(f<=5)return 5;
+  if(f<=10)return 6;
+  if(f<=15)return 7;
+  if(f<=20)return 8;
+  if(f<=24)return 10;
+  if(f<=27)return 12;
+  if(f<=29)return 15;
+  return 20;
+}
 function makeMonster(){
   const f=state.floor;
-  const base=36 + f*12 + Math.floor(Math.pow(f,1.35)*2.2);
+  const difficultyBoost=f>=28?1.28:(f>=22?1.15:1);
+  const base=Math.round((36 + f*12 + Math.floor(Math.pow(f,1.35)*2.2))*difficultyBoost);
   const idx=Math.min(monsterSets.length-1,f-1);
   const [icon,name]=monsterSets[idx];
   state.monster={
     floor:f,name:`${name} Lv.${f}`,icon,
     maxHp:base,hp:base,
-    atk:Math.round(7+f*1.65),
-    reward:Math.round(18+f*8+Math.pow(f,1.23)*2)
+    atk:Math.round((7+f*1.65)*(f>=28?1.12:1)),
+    reward:Math.round(18+f*8+Math.pow(f,1.23)*2),
+    correctHits:0,
+    requiredHits:requiredCorrect(f)
   };
   state.combo=0;
   nextQuestion();
@@ -769,7 +863,10 @@ function makeMonster(){
 }
 
 function ensureMonster(){
-  if(!state.monster || state.monster.floor!==state.floor || state.monster.hp<=0) makeMonster();
+  if(!state.monster || state.monster.floor!==state.floor || state.monster.hp<=0 ||
+     !Number.isFinite(state.monster.correctHits) || !Number.isFinite(state.monster.requiredHits)){
+    makeMonster();
+  }
 }
 
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
@@ -871,6 +968,8 @@ function renderAll(){
   document.getElementById("scoreBadge").textContent=`TOEIC 約 ${floorScore(state.floor)}`;
   document.getElementById("difficultyText").textContent=`第 ${state.floor} 階｜${floorBandLabel(state.floor)}`;
   document.getElementById("comboText").textContent=state.combo;
+  const gate=document.getElementById("battleCorrectText");
+  if(gate && state.monster) gate.textContent=`${state.monster.correctHits||0} / ${state.monster.requiredHits||requiredCorrect(state.floor)}`;
   const poolSize=(floorVocab[state.floor]||[]).length;
   const fps=document.getElementById("floorPoolSize"); if(fps) fps.textContent=poolSize||"—";
 
@@ -886,7 +985,17 @@ function renderAll(){
   renderWrongBook();
   saveState();
 }
-function floorBandLabel(f){ if(f<=5)return "基礎"; if(f<=10)return "初級商務"; if(f<=15)return "中級商務"; if(f<=20)return "中高級"; if(f<=25)return "高階"; return "菁英"; }
+function floorBandLabel(f){
+  if(f<=4)return "基礎";
+  if(f<=8)return "初級";
+  if(f<=12)return "中級";
+  if(f<=16)return "中高級";
+  if(f<=21)return "高階";
+  if(f<=24)return "高階＋";
+  if(f<=27)return "進階高階";
+  if(f<=29)return "菁英";
+  return "塔頂";
+}
 function renderQuestion(){
   const q=state.question;
   if(!q)return;
@@ -900,6 +1009,7 @@ function renderQuestion(){
     b.dataset.word=opt.w;
     b.dataset.meaning=opt.m;
     b.innerHTML=`<b>${i+1}.</b> ${opt.m}`;
+    b.disabled=(bankMode==="loading");
     b.onclick=()=>answer(opt,b);
     wrap.appendChild(b);
   });
@@ -971,12 +1081,18 @@ function answer(opt,btn){
   if(correct){
     state.correct++;
     state.combo++;
+    state.monster.correctHits=(state.monster.correctHits||0)+1;
     const comboBonus=state.combo>=3?Math.min(18,(state.combo-2)*3):0;
     const dmg=attackPower()+comboBonus;
-    state.monster.hp=Math.max(0,state.monster.hp-dmg);
+    let nextHp=Math.max(0,state.monster.hp-dmg);
+    // A monster cannot be defeated before the floor's vocabulary mastery gate is met.
+    if(nextHp<=0 && state.monster.correctHits<state.monster.requiredHits) nextHp=1;
+    state.monster.hp=nextHp;
     btn.classList.add("correct");
     animateAttack(true);
-    document.getElementById("feedback").innerHTML=`✅ <b>${q.w}</b> = ${q.m}。你造成 <b>${dmg}</b> 點傷害${comboBonus?`（連擊 +${comboBonus}）`:""}！<br><br>📘 <b>例句：</b>${exEn}<br><span style="color:#9fb0ca">${exZh}</span>`;
+    const gateRemain=Math.max(0,state.monster.requiredHits-state.monster.correctHits);
+    const gateMsg=gateRemain>0?`<br><span style="color:#f2c75c">本層熟練門檻尚需答對 ${gateRemain} 題。</span>`:"";
+    document.getElementById("feedback").innerHTML=`✅ <b>${q.w}</b> = ${q.m}。你造成 <b>${dmg}</b> 點傷害${comboBonus?`（連擊 +${comboBonus}）`:""}！${gateMsg}<br><br>📘 <b>例句：</b>${exEn}<br><span style="color:#9fb0ca">${exZh}</span>`;
     document.getElementById("battleLog").textContent=`${state.name} 發動攻擊！${q.w} 的意思答對了。`;
     if(state.monster.hp<=0){
       setTimeout(winBattle,420);
@@ -1018,6 +1134,8 @@ function renderStatsOnly(){
   document.getElementById("monsterHpText").textContent=`${Math.max(0,state.monster.hp)} / ${state.monster.maxHp}`;
   document.getElementById("monsterHpFill").style.width=`${Math.max(0,state.monster.hp)/state.monster.maxHp*100}%`;
   document.getElementById("comboText").textContent=state.combo;
+  const gate=document.getElementById("battleCorrectText");
+  if(gate && state.monster) gate.textContent=`${state.monster.correctHits||0} / ${state.monster.requiredHits||requiredCorrect(state.floor)}`;
   document.getElementById("accuracyStat").textContent=state.total?`${Math.round(state.correct/state.total*100)}%`:"—";
 }
 
@@ -1148,6 +1266,8 @@ if(state.question && (!Array.isArray(state.question.options) || typeof state.que
 ensureMonster();
 if(!state.question) nextQuestion();
 renderAll();
+// V3.2 critical fix: automatically load and verify the 7,000-word bank on startup.
+loadLargeVocabulary(false);
 </script>
 </body>
 </html>
